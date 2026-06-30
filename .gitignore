@@ -1,0 +1,30 @@
+# Environment
+.env
+.env.*
+
+# Keep examples
+!.env.example
+
+# Java / Maven
+target/
+*.class
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Frontend future
+node_modules/
+dist/
+build/
+
+# Docker/local volumes
+docker-data/
