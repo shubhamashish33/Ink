@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -70,4 +71,40 @@ public class NoteController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/archived")
+    public List<NoteResponse> findAllArchived(Authentication authentication) {
+        return noteService.findArchived(authentication.getName());
+    }
+
+    @PatchMapping("/{id}/archive")
+    public NoteResponse archive(
+        Authentication authentication,
+        @PathVariable UUID id
+    ) {
+        return noteService.archive(authentication.getName(), id);
+    }
+
+    @PatchMapping("/{id}/unarchive")
+    public NoteResponse unarchive(
+        Authentication authentication,
+        @PathVariable UUID id
+    ) {
+        return noteService.unarchive(authentication.getName(), id);
+    }
+
+    @PatchMapping("/{id}/pin")
+    public NoteResponse pin(
+        Authentication authentication,
+        @PathVariable UUID id
+    ) {
+        return noteService.pin(authentication.getName(), id);
+    }
+
+    @PatchMapping("/{id}/unpin")
+    public NoteResponse unpin(
+        Authentication authentication,
+        @PathVariable UUID id
+    ) {
+        return noteService.unpin(authentication.getName(), id);
+    }
 }

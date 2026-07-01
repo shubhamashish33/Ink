@@ -43,7 +43,7 @@ public class NoteService {
 
         User user = getUserByEmail(email);
 
-        return noteRepository.findAllByUser_IdOrderByUpdatedAtDesc(user.getId()).stream().map(this::toResponse).toList();
+        return noteRepository.findAllByUser_IdAndArchivedFalseOrderByPinnedDescUpdatedAtDesc(user.getId()).stream().map(this::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
@@ -61,7 +61,7 @@ public class NoteService {
 
         Note note = noteRepository.findByIdAndUser_Id(noteId, user.getId()).orElseThrow(() -> new ResourceNotFoundException("Note not found"));
 
-        note.update(note.getTitle().trim(), note.getContent().trim());
+        note.update(request.title().trim(), request.content().trim());
 
         return toResponse(note);
     }
@@ -75,6 +75,58 @@ public class NoteService {
         noteRepository.delete(note);
     }
 
+    @Transactional
+    public NoteResponse archive(String email, UUID noteId) {
+        User user = getUserByEmail(email);
+
+        Note note = noteRepository.findByIdAndUser_Id(noteId, user.getId()).orElseThrow(() -> new ResourceNotFoundException("Note not found"));
+
+        note.archive();
+
+        return toResponse(note);
+    }
+
+    @Transactional
+    public NoteResponse unarchive(String email, UUID noteId) {
+        User user = getUserByEmail(email);
+
+        Note note = noteRepository.findByIdAndUser_Id(noteId, user.getId()).orElseThrow(() -> new ResourceNotFoundException("Note not found"));
+
+        note.unarchive();
+
+        return toResponse(note);
+    }
+
+
+    @Transactional
+    public NoteResponse pin(String email, UUID noteId) {
+        User user = getUserByEmail(email);
+
+        Note note = noteRepository.findByIdAndUser_Id(noteId, user.getId()).orElseThrow(() -> new ResourceNotFoundException("Note not found"));
+
+        note.pin();
+
+        return toResponse(note);
+    }
+
+    @Transactional
+    public NoteResponse unpin(String email, UUID noteId) {
+        User user = getUserByEmail(email);
+
+        Note note = noteRepository.findByIdAndUser_Id(noteId, user.getId()).orElseThrow(() -> new ResourceNotFoundException("Note not found"));
+
+        note.unpin();
+
+        return toResponse(note);
+    }
+
+    @Transactional(readOnly = true)
+    public List<NoteResponse> findArchived(String email) {
+        User user = getUserByEmail(email);
+
+        return noteRepository.findAllByUser_IdAndArchivedTrueOrderByUpdatedAtDesc(user.getId()).stream().map(this::toResponse).toList();
+    }
+
     private User getUserByEmail(String email) {
         return userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException(email));
     }
@@ -84,6 +136,8 @@ public class NoteService {
             note.getId(),
             note.getTitle(),
             note.getContent(),
+            note.isArchived(),
+            note.isPinned(),
             note.getCreatedAt(),
             note.getUpdatedAt()
         );

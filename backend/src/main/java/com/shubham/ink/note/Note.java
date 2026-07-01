@@ -41,6 +41,12 @@ public class Note {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    @Column(nullable =  false)
+    private boolean archived = false;
+
+    @Column(nullable = false)
+    private boolean pinned = false;
+
     protected Note() {
     }
 
@@ -84,6 +90,30 @@ public class Note {
 
     public Instant getUpdatedAt() {
         return updatedAt;
+    }
+
+    public boolean isArchived() {
+        return archived;
+    }
+
+    public boolean isPinned() {
+        return pinned;
+    }
+    
+    public void archive() {
+        this.archived = true;
+    }
+
+    public void unarchive() {
+        this.archived = false;
+    }
+
+    public void pin() {
+        this.pinned = true;
+    }
+
+    public void unpin() {
+        this.pinned = false;
     }
 
     public void update(String title, String content) {

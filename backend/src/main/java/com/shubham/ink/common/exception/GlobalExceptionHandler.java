@@ -60,7 +60,7 @@ public class GlobalExceptionHandler {
         ApiErrorResponse response = new ApiErrorResponse(
             Instant.now(),
             HttpStatus.UNAUTHORIZED.value(),
-            HttpStatus.FORBIDDEN.getReasonPhrase(),
+            HttpStatus.UNAUTHORIZED.getReasonPhrase(),
             exception.getMessage(),
             request.getRequestURI(),
             null

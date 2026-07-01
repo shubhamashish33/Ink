@@ -7,6 +7,8 @@ public record NoteResponse(
     UUID id,
     String title,
     String content,
+    boolean archived,
+    boolean pinned,
     Instant createdAt,
     Instant updatedAt
 ) {
