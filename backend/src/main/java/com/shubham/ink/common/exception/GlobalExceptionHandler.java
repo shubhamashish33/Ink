@@ -52,7 +52,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(response);
 
     }
-
+    @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ApiErrorResponse> handleInvalidCredentialsResource(
         InvalidCredentialsException exception,
         HttpServletRequest request
@@ -60,7 +60,7 @@ public class GlobalExceptionHandler {
         ApiErrorResponse response = new ApiErrorResponse(
             Instant.now(),
             HttpStatus.UNAUTHORIZED.value(),
-            HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+            HttpStatus.FORBIDDEN.getReasonPhrase(),
             exception.getMessage(),
             request.getRequestURI(),
             null
