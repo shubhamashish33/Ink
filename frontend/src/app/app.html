@@ -1,127 +1,56 @@
-<main class="shell">
-  <aside class="sidebar">
-    <section class="brand">
+<main class="app-shell" [class.dark]="theme.dark()">
+  <header class="topbar">
+    <div class="brand-lockup">
+      <span class="brand-mark" aria-hidden="true">
+        <svg lucideBookOpen class="brand-icon"></svg>
+      </span>
       <div>
         <h1>Ink</h1>
-        <p>AI notes backend client</p>
+        <p>Private notes with backend-grade auth, search, and future RAG.</p>
       </div>
-      @if (isAuthenticated()) {
-        <button class="ghost icon-button" type="button" title="Sign out" (click)="logout()">Exit</button>
+    </div>
+
+    <div class="topbar-actions">
+      @if (auth.isAuthenticated()) {
+        <span class="status-pill"><svg lucideShieldCheck class="icon"></svg> Secured</span>
       }
-    </section>
-
-    @if (!isAuthenticated()) {
-      <section class="auth-panel">
-        <div class="segmented">
-          <button type="button" [class.active]="authMode() === 'login'" (click)="switchAuthMode('login')">Login</button>
-          <button type="button" [class.active]="authMode() === 'register'" (click)="switchAuthMode('register')">Register</button>
-        </div>
-
-        @if (authMode() === 'login') {
-          <form (ngSubmit)="login()">
-            <label>
-              Email
-              <input name="login-email" type="email" autocomplete="email" [ngModel]="loginForm().email" (ngModelChange)="updateLogin('email', $event)" />
-            </label>
-            <label>
-              Password
-              <input name="login-password" type="password" autocomplete="current-password" [ngModel]="loginForm().password" (ngModelChange)="updateLogin('password', $event)" />
-            </label>
-            <button class="primary" type="submit" [disabled]="loading()">Login</button>
-          </form>
+      <button class="theme-toggle" type="button" [title]="theme.dark() ? 'Switch to light mode' : 'Switch to dark mode'" (click)="theme.toggle()">
+        @if (theme.dark()) {
+          <svg lucideSun class="icon"></svg>
+          <span>Light</span>
         } @else {
-          <form (ngSubmit)="register()">
-            <label>
-              Name
-              <input name="register-name" type="text" autocomplete="name" [ngModel]="registerForm().displayName" (ngModelChange)="updateRegister('displayName', $event)" />
-            </label>
-            <label>
-              Email
-              <input name="register-email" type="email" autocomplete="email" [ngModel]="registerForm().email" (ngModelChange)="updateRegister('email', $event)" />
-            </label>
-            <label>
-              Password
-              <input name="register-password" type="password" autocomplete="new-password" [ngModel]="registerForm().password" (ngModelChange)="updateRegister('password', $event)" />
-            </label>
-            <button class="primary" type="submit" [disabled]="loading()">Create account</button>
-          </form>
+          <svg lucideMoon class="icon"></svg>
+          <span>Dark</span>
         }
-      </section>
-    } @else {
-      <section class="user-strip">
-        <span>{{ currentUser()?.displayName }}</span>
-        <small>{{ currentUser()?.email }}</small>
-      </section>
+      </button>
+    </div>
+  </header>
 
-      <section class="nav">
-        <button type="button" [class.active]="activeView() === 'active'" (click)="selectView('active')">Notes</button>
-        <button type="button" [class.active]="activeView() === 'archived'" (click)="selectView('archived')">Archived</button>
-      </section>
+  @if (api.error()) {
+    <section class="error-banner">{{ api.error() }}</section>
+  }
 
-      <button class="primary full" type="button" (click)="startNewNote()">New note</button>
-
-      <section class="note-list">
-        @for (note of visibleNotes(); track note.id) {
-          <button type="button" class="note-row" [class.selected]="selectedNoteId() === note.id" (click)="selectNote(note)">
-            <span class="row-title">{{ note.title }}</span>
-            <span class="row-meta">
-              @if (note.pinned) {
-                <span>Pinned</span>
-              }
-              <span>{{ note.updatedAt | date: 'mediumDate' }}</span>
-            </span>
-          </button>
-        } @empty {
-          <p class="empty">No notes here.</p>
-        }
-      </section>
-    }
-  </aside>
-
-  <section class="workspace">
-    @if (error()) {
-      <div class="error">{{ error() }}</div>
-    }
-
-    @if (isAuthenticated()) {
-      <form class="editor" (ngSubmit)="saveNote()">
-        <div class="editor-topbar">
-          <input class="title-input" name="note-title" placeholder="Untitled" [ngModel]="noteForm().title" (ngModelChange)="updateNoteForm('title', $event)" />
-          @if (selectedNote()) {
-            <div class="actions">
-              @if (selectedNote()?.pinned) {
-                <button type="button" class="ghost" (click)="unpin(selectedNote()!)">Unpin</button>
-              } @else {
-                <button type="button" class="ghost" (click)="pin(selectedNote()!)">Pin</button>
-              }
-              @if (selectedNote()?.archived) {
-                <button type="button" class="ghost" (click)="unarchive(selectedNote()!)">Unarchive</button>
-              } @else {
-                <button type="button" class="ghost" (click)="archive(selectedNote()!)">Archive</button>
-              }
-              <button type="button" class="danger" (click)="deleteNote(selectedNote()!)">Delete</button>
-            </div>
-          }
+  @if (auth.isAuthenticated()) {
+    <section class="workspace-grid">
+      <app-notes-shell />
+    </section>
+  } @else {
+    <section class="auth-layout">
+      <div class="auth-copy">
+        <span class="eyebrow"><svg lucideSparkles class="icon"></svg> Backend-first learning app</span>
+        <h2>Use your Spring Boot API like a real notes product.</h2>
+        <p>
+          Register, log in, create notes, pin important work, archive completed ideas, and search through the same endpoints you are building.
+        </p>
+        <div class="capability-grid" aria-label="Implemented backend capabilities">
+          <span><svg lucideShieldCheck class="icon"></svg> JWT auth</span>
+          <span><svg lucideNotebook class="icon"></svg> Notes CRUD</span>
+          <span><svg lucideArchive class="icon"></svg> Archive and pin</span>
+          <span><svg lucideSearch class="icon"></svg> Search</span>
         </div>
+      </div>
 
-        <textarea name="note-content" placeholder="Write your note..." [ngModel]="noteForm().content" (ngModelChange)="updateNoteForm('content', $event)"></textarea>
-
-        <div class="editor-footer">
-          <span>
-            @if (selectedNote()) {
-              Updated {{ selectedNote()?.updatedAt | date: 'medium' }}
-            } @else {
-              Draft
-            }
-          </span>
-          <button class="primary" type="submit" [disabled]="loading()">Save</button>
-        </div>
-      </form>
-    } @else {
-      <section class="welcome">
-        <h2>Sign in to work with your notes</h2>
-        <p>The Angular client is wired to your Spring Boot JWT API.</p>
-      </section>
-    }
-  </section>
+      <app-auth-panel />
+    </section>
+  }
 </main>

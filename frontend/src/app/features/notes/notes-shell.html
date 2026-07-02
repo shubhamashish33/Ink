@@ -1,0 +1,128 @@
+<aside class="sidebar">
+  <section class="user-strip">
+    <div class="avatar" aria-hidden="true">{{ auth.user()?.displayName?.charAt(0) || 'I' }}</div>
+    <div class="user-meta">
+      <span>{{ auth.user()?.displayName }}</span>
+      <small>{{ auth.user()?.email }}</small>
+    </div>
+    <button class="icon-button" type="button" title="Sign out" (click)="logout()">
+      <svg lucideLogOut class="icon"></svg>
+    </button>
+  </section>
+
+  <section class="quick-stats" aria-label="Notes summary">
+    <div>
+      <strong>{{ notes.notes().length }}</strong>
+      <span>Active</span>
+    </div>
+    <div>
+      <strong>{{ notes.archivedNotes().length }}</strong>
+      <span>Archived</span>
+    </div>
+  </section>
+
+  <label class="search-row">
+    <svg lucideSearch class="search-icon"></svg>
+    <input type="search" placeholder="Search title or content" [ngModel]="notes.searchQuery()" (ngModelChange)="updateSearch($event)" />
+  </label>
+
+  <section class="nav" aria-label="Note views">
+    <button type="button" [class.active]="notes.activeView() === 'active'" (click)="notes.switchView('active')">
+      <svg lucideNotebook class="icon"></svg>
+      Notes
+    </button>
+    <button type="button" [class.active]="notes.activeView() === 'archived'" (click)="notes.switchView('archived')">
+      <svg lucideArchive class="icon"></svg>
+      Archive
+    </button>
+  </section>
+
+  <button class="primary full" type="button" (click)="notes.clearSelection()">
+    <svg lucidePlus class="icon"></svg>
+    New note
+  </button>
+
+  <section class="note-list">
+    @for (note of notes.visibleNotes(); track note.id) {
+      <button type="button" class="note-row" [class.selected]="notes.selectedNoteId() === note.id" (click)="notes.select(note)">
+        <span class="note-row-top">
+          <span class="row-title">{{ note.title }}</span>
+          @if (note.pinned) {
+            <svg lucidePin class="pin-icon"></svg>
+          }
+        </span>
+        <span class="row-preview">{{ note.content }}</span>
+        <span class="row-meta">
+          <span><svg lucideClock class="meta-icon"></svg>{{ note.updatedAt | date: 'mediumDate' }}</span>
+          @if (note.archived) {
+            <span><svg lucideArchive class="meta-icon"></svg>Archived</span>
+          }
+        </span>
+      </button>
+    } @empty {
+      <div class="empty">
+        <svg lucideFileText class="empty-icon"></svg>
+        <strong>No notes here</strong>
+        <span>Create a note or try a different search.</span>
+      </div>
+    }
+  </section>
+</aside>
+
+<section class="workspace">
+  <form class="editor" (ngSubmit)="notes.save()">
+    <div class="editor-topbar">
+      <div class="editor-title-wrap">
+        <span class="document-icon"><svg lucideFileText class="icon"></svg></span>
+        <input class="title-input" name="note-title" placeholder="Untitled note" [ngModel]="notes.draft().title" (ngModelChange)="notes.updateDraft('title', $event)" />
+      </div>
+
+      @if (notes.selectedNote()) {
+        <div class="actions">
+          @if (notes.selectedNote()?.pinned) {
+            <button type="button" class="ghost" (click)="notes.unpin(notes.selectedNote()!)">
+              <svg lucidePin class="icon"></svg>
+              Unpin
+            </button>
+          } @else {
+            <button type="button" class="ghost" (click)="notes.pin(notes.selectedNote()!)">
+              <svg lucidePin class="icon"></svg>
+              Pin
+            </button>
+          }
+          @if (notes.selectedNote()?.archived) {
+            <button type="button" class="ghost" (click)="notes.unarchive(notes.selectedNote()!)">
+              <svg lucideArchiveRestore class="icon"></svg>
+              Restore
+            </button>
+          } @else {
+            <button type="button" class="ghost" (click)="notes.archive(notes.selectedNote()!)">
+              <svg lucideArchive class="icon"></svg>
+              Archive
+            </button>
+          }
+          <button type="button" class="danger" (click)="notes.delete(notes.selectedNote()!)">
+            <svg lucideTrash2 class="icon"></svg>
+            Delete
+          </button>
+        </div>
+      }
+    </div>
+
+    <textarea name="note-content" placeholder="Start writing. Keep it clear, searchable, and useful to future you." [ngModel]="notes.draft().content" (ngModelChange)="notes.updateDraft('content', $event)"></textarea>
+
+    <div class="editor-footer">
+      <span>
+        @if (notes.selectedNote()) {
+          Updated {{ notes.selectedNote()?.updatedAt | date: 'medium' }}
+        } @else {
+          New draft
+        }
+      </span>
+      <button class="primary" type="submit" [disabled]="api.loading()">
+        <svg lucideSave class="icon"></svg>
+        Save
+      </button>
+    </div>
+  </form>
+</section>

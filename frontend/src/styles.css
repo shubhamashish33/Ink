@@ -1,7 +1,11 @@
 html {
-  background: #f5f7fb;
+  background: #f4f6f0;
 }
 
 body {
   margin: 0;
+}
+
+* {
+  box-sizing: border-box;
 }

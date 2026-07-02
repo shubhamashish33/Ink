@@ -1,0 +1,65 @@
+<section class="auth-card">
+  <div class="auth-header">
+    <span class="auth-badge"><svg lucideKeyRound class="icon"></svg></span>
+    <div>
+      <h2>{{ mode() === 'login' ? 'Welcome back' : 'Create your Ink account' }}</h2>
+      <p>{{ mode() === 'login' ? 'Continue to your private workspace.' : 'Start with secure notes and JWT auth.' }}</p>
+    </div>
+  </div>
+
+  <div class="segmented">
+    <button type="button" [class.active]="mode() === 'login'" (click)="setMode('login')">Login</button>
+    <button type="button" [class.active]="mode() === 'register'" (click)="setMode('register')">Register</button>
+  </div>
+
+  @if (mode() === 'login') {
+    <form (ngSubmit)="login()">
+      <label>
+        Email
+        <span class="input-shell">
+          <svg lucideMail class="input-icon"></svg>
+          <input name="login-email" type="email" autocomplete="email" placeholder="you@example.com" [ngModel]="loginForm().email" (ngModelChange)="updateLogin('email', $event)" />
+        </span>
+      </label>
+      <label>
+        Password
+        <span class="input-shell">
+          <svg lucideLock class="input-icon"></svg>
+          <input name="login-password" type="password" autocomplete="current-password" placeholder="Your password" [ngModel]="loginForm().password" (ngModelChange)="updateLogin('password', $event)" />
+        </span>
+      </label>
+      <button class="primary" type="submit" [disabled]="api.loading()">
+        <svg lucideShieldCheck class="icon"></svg>
+        Login securely
+      </button>
+    </form>
+  } @else {
+    <form (ngSubmit)="register()">
+      <label>
+        Name
+        <span class="input-shell">
+          <svg lucideUser class="input-icon"></svg>
+          <input name="register-name" type="text" autocomplete="name" placeholder="Display name" [ngModel]="registerForm().displayName" (ngModelChange)="updateRegister('displayName', $event)" />
+        </span>
+      </label>
+      <label>
+        Email
+        <span class="input-shell">
+          <svg lucideMail class="input-icon"></svg>
+          <input name="register-email" type="email" autocomplete="email" placeholder="you@example.com" [ngModel]="registerForm().email" (ngModelChange)="updateRegister('email', $event)" />
+        </span>
+      </label>
+      <label>
+        Password
+        <span class="input-shell">
+          <svg lucideLock class="input-icon"></svg>
+          <input name="register-password" type="password" autocomplete="new-password" placeholder="At least 8 characters" [ngModel]="registerForm().password" (ngModelChange)="updateRegister('password', $event)" />
+        </span>
+      </label>
+      <button class="primary" type="submit" [disabled]="api.loading()">
+        <svg lucideShieldCheck class="icon"></svg>
+        Create account
+      </button>
+    </form>
+  }
+</section>
