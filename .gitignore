@@ -8,6 +8,8 @@
 # Java / Maven
 target/
 *.class
+.m2/
+.tools/
 
 # IDE
 .idea/
