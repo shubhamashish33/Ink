@@ -1,0 +1,127 @@
+<main class="shell">
+  <aside class="sidebar">
+    <section class="brand">
+      <div>
+        <h1>Ink</h1>
+        <p>AI notes backend client</p>
+      </div>
+      @if (isAuthenticated()) {
+        <button class="ghost icon-button" type="button" title="Sign out" (click)="logout()">Exit</button>
+      }
+    </section>
+
+    @if (!isAuthenticated()) {
+      <section class="auth-panel">
+        <div class="segmented">
+          <button type="button" [class.active]="authMode() === 'login'" (click)="switchAuthMode('login')">Login</button>
+          <button type="button" [class.active]="authMode() === 'register'" (click)="switchAuthMode('register')">Register</button>
+        </div>
+
+        @if (authMode() === 'login') {
+          <form (ngSubmit)="login()">
+            <label>
+              Email
+              <input name="login-email" type="email" autocomplete="email" [ngModel]="loginForm().email" (ngModelChange)="updateLogin('email', $event)" />
+            </label>
+            <label>
+              Password
+              <input name="login-password" type="password" autocomplete="current-password" [ngModel]="loginForm().password" (ngModelChange)="updateLogin('password', $event)" />
+            </label>
+            <button class="primary" type="submit" [disabled]="loading()">Login</button>
+          </form>
+        } @else {
+          <form (ngSubmit)="register()">
+            <label>
+              Name
+              <input name="register-name" type="text" autocomplete="name" [ngModel]="registerForm().displayName" (ngModelChange)="updateRegister('displayName', $event)" />
+            </label>
+            <label>
+              Email
+              <input name="register-email" type="email" autocomplete="email" [ngModel]="registerForm().email" (ngModelChange)="updateRegister('email', $event)" />
+            </label>
+            <label>
+              Password
+              <input name="register-password" type="password" autocomplete="new-password" [ngModel]="registerForm().password" (ngModelChange)="updateRegister('password', $event)" />
+            </label>
+            <button class="primary" type="submit" [disabled]="loading()">Create account</button>
+          </form>
+        }
+      </section>
+    } @else {
+      <section class="user-strip">
+        <span>{{ currentUser()?.displayName }}</span>
+        <small>{{ currentUser()?.email }}</small>
+      </section>
+
+      <section class="nav">
+        <button type="button" [class.active]="activeView() === 'active'" (click)="selectView('active')">Notes</button>
+        <button type="button" [class.active]="activeView() === 'archived'" (click)="selectView('archived')">Archived</button>
+      </section>
+
+      <button class="primary full" type="button" (click)="startNewNote()">New note</button>
+
+      <section class="note-list">
+        @for (note of visibleNotes(); track note.id) {
+          <button type="button" class="note-row" [class.selected]="selectedNoteId() === note.id" (click)="selectNote(note)">
+            <span class="row-title">{{ note.title }}</span>
+            <span class="row-meta">
+              @if (note.pinned) {
+                <span>Pinned</span>
+              }
+              <span>{{ note.updatedAt | date: 'mediumDate' }}</span>
+            </span>
+          </button>
+        } @empty {
+          <p class="empty">No notes here.</p>
+        }
+      </section>
+    }
+  </aside>
+
+  <section class="workspace">
+    @if (error()) {
+      <div class="error">{{ error() }}</div>
+    }
+
+    @if (isAuthenticated()) {
+      <form class="editor" (ngSubmit)="saveNote()">
+        <div class="editor-topbar">
+          <input class="title-input" name="note-title" placeholder="Untitled" [ngModel]="noteForm().title" (ngModelChange)="updateNoteForm('title', $event)" />
+          @if (selectedNote()) {
+            <div class="actions">
+              @if (selectedNote()?.pinned) {
+                <button type="button" class="ghost" (click)="unpin(selectedNote()!)">Unpin</button>
+              } @else {
+                <button type="button" class="ghost" (click)="pin(selectedNote()!)">Pin</button>
+              }
+              @if (selectedNote()?.archived) {
+                <button type="button" class="ghost" (click)="unarchive(selectedNote()!)">Unarchive</button>
+              } @else {
+                <button type="button" class="ghost" (click)="archive(selectedNote()!)">Archive</button>
+              }
+              <button type="button" class="danger" (click)="deleteNote(selectedNote()!)">Delete</button>
+            </div>
+          }
+        </div>
+
+        <textarea name="note-content" placeholder="Write your note..." [ngModel]="noteForm().content" (ngModelChange)="updateNoteForm('content', $event)"></textarea>
+
+        <div class="editor-footer">
+          <span>
+            @if (selectedNote()) {
+              Updated {{ selectedNote()?.updatedAt | date: 'medium' }}
+            } @else {
+              Draft
+            }
+          </span>
+          <button class="primary" type="submit" [disabled]="loading()">Save</button>
+        </div>
+      </form>
+    } @else {
+      <section class="welcome">
+        <h2>Sign in to work with your notes</h2>
+        <p>The Angular client is wired to your Spring Boot JWT API.</p>
+      </section>
+    }
+  </section>
+</main>
