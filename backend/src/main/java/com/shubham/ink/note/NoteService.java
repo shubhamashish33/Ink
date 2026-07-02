@@ -15,7 +15,7 @@ import com.shubham.ink.user.UserRepository;
 
 @Service
 public class NoteService {
-    
+
     private final UserRepository userRepository;
     private final NoteRepository noteRepository;
 
@@ -125,6 +125,19 @@ public class NoteService {
         User user = getUserByEmail(email);
 
         return noteRepository.findAllByUser_IdAndArchivedTrueOrderByUpdatedAtDesc(user.getId()).stream().map(this::toResponse).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<NoteResponse> search(String email, String query) {
+        User user = getUserByEmail(email);
+
+        String normalizedQuery = query == null ? "" : query.trim();
+
+        if (normalizedQuery.isBlank()) {
+            return List.of();
+        }
+
+        return noteRepository.searchActiveNotes(user.getId(), query).stream().map(this::toResponse).toList();
     }
 
     private User getUserByEmail(String email) {

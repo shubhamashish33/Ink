@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.shubham.ink.note.dto.CreateNoteRequest;
@@ -25,7 +26,7 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/api/notes")
 public class NoteController {
-    
+
     private final NoteService noteService;
 
     public NoteController(NoteService noteService) {
@@ -34,7 +35,7 @@ public class NoteController {
 
     @PostMapping
     public ResponseEntity<NoteResponse> create (
-        Authentication authentication, 
+        Authentication authentication,
         @Valid @RequestBody CreateNoteRequest request
     ) {
         return ResponseEntity.status(HttpStatus.CREATED).body(noteService.create(authentication.getName(), request));
@@ -45,14 +46,22 @@ public class NoteController {
         return noteService.findAll(authentication.getName());
     }
 
+    @GetMapping("/search")
+    public List<NoteResponse> search(
+            Authentication authentication,
+            @RequestParam("q") String query
+    ) {
+        return noteService.search(authentication.getName(), query);
+    }
+
     @GetMapping("/{id}")
     public NoteResponse findbyId(
-        Authentication authentication, 
+        Authentication authentication,
         @PathVariable UUID id
     ) {
         return noteService.findById(authentication.getName(), id);
     }
-    
+
     @PutMapping("/{id}")
     public NoteResponse update(
         Authentication authentication,
@@ -107,4 +116,5 @@ public class NoteController {
     ) {
         return noteService.unpin(authentication.getName(), id);
     }
+
 }
