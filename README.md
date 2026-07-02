@@ -10,13 +10,15 @@ Ink is a backend-first AI notes application built to learn production-style Java
 - PostgreSQL 16 with pgvector
 - Flyway
 - Docker Compose
+- Angular standalone components with signals
+- Nginx for serving the production frontend build
 
 ## Project Structure
 
 ```text
 Ink/
   backend/              Spring Boot application
-  frontend/             Future frontend placeholder
+  frontend/             Angular application
   docker/               Future Docker/deployment support files
   docker-compose.yml    Local service orchestration
   docker-compose.dev.yml
@@ -41,6 +43,12 @@ From the project root:
 docker compose up --build
 ```
 
+Frontend:
+
+```text
+http://localhost:4200
+```
+
 Backend health check:
 
 ```text
@@ -53,21 +61,33 @@ If port `8080` is already in use, change this in `.env`:
 BACKEND_PORT=8081
 ```
 
-Then use:
+If port `4200` is already in use, change this in `.env`:
 
-```text
-http://localhost:8081/actuator/health
+```env
+FRONTEND_PORT=4201
 ```
 
-## Run Database Only
+## Run Individual Docker Services
 
-From the project root:
+Run only PostgreSQL:
 
 ```powershell
 docker compose up postgres
 ```
 
-This starts PostgreSQL with pgvector enabled by the Flyway migration.
+Run backend with PostgreSQL:
+
+```powershell
+docker compose up postgres backend
+```
+
+Run frontend container after backend is available:
+
+```powershell
+docker compose up frontend
+```
+
+The frontend container serves Angular with Nginx. Browser requests to `/api/...` are proxied inside Docker to `backend:8080`, so the compiled Angular app does not need a hardcoded backend URL.
 
 ## Run Backend Locally
 
@@ -88,13 +108,39 @@ $env:SPRING_PROFILES_ACTIVE="dev"
 .\mvnw.cmd spring-boot:run
 ```
 
+## Run Frontend Locally
+
+Start the backend first, either through Docker Compose or locally. Then:
+
+```powershell
+cd frontend
+npm install
+npm start
+```
+
+The local Angular dev server uses `proxy.conf.json` to forward `/api` requests to `http://localhost:8080`.
+
 ## Useful Commands
 
-Run tests:
+Run backend tests:
 
 ```powershell
 cd backend
 .\mvnw.cmd test
+```
+
+Run frontend tests:
+
+```powershell
+cd frontend
+npm test -- --watch=false
+```
+
+Build frontend:
+
+```powershell
+cd frontend
+npm run build
 ```
 
 Stop containers:
