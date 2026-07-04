@@ -1,25 +1,26 @@
 package com.shubham.ink.note;
 
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface NoteRepository extends JpaRepository<Note, UUID> {
 
-    List<Note> findAllByUser_IdOrderByUpdatedAtDesc(UUID userId);
+    Page<Note> findAllByUser_IdOrderByUpdatedAtDesc(UUID userId, Pageable pageable);
 
     Optional<Note> findByIdAndUser_Id(UUID id, UUID userId);
 
     void deleteByIdAndUser_Id(UUID id, UUID userId);
 
-    List<Note> findAllByUser_IdAndArchivedFalseOrderByPinnedDescUpdatedAtDesc(UUID userId);
+    Page<Note> findAllByUser_IdAndArchivedFalseOrderByPinnedDescUpdatedAtDesc(UUID userId, Pageable pageable);
 
-    List<Note> findAllByUser_IdAndArchivedTrueOrderByUpdatedAtDesc(UUID userId);
+    Page<Note> findAllByUser_IdAndArchivedTrueOrderByUpdatedAtDesc(UUID userId, Pageable pageable);
 
     @Query("""
             SELECT n
@@ -32,5 +33,9 @@ public interface NoteRepository extends JpaRepository<Note, UUID> {
               )
             ORDER BY n.pinned DESC, n.updatedAt DESC
             """)
-    List<Note> searchActiveNotes( @Param("userId") UUID userId, @Param("query") String query );
+    Page<Note> searchActiveNotes(
+        @Param("userId") UUID userId,
+        @Param("query") String query,
+        Pageable pageable
+    );
 }

@@ -1,8 +1,10 @@
 package com.shubham.ink.note;
 
-import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -42,16 +44,20 @@ public class NoteController {
     }
 
     @GetMapping
-    public List<NoteResponse> findAll(Authentication authentication) {
-        return noteService.findAll(authentication.getName());
+    public Page<NoteResponse> findAll(
+        Authentication authentication,
+        @PageableDefault(size = 20) Pageable pageable
+    ) {
+        return noteService.findAll(authentication.getName(), pageable);
     }
 
     @GetMapping("/search")
-    public List<NoteResponse> search(
+    public Page<NoteResponse> search(
             Authentication authentication,
-            @RequestParam("q") String query
+            @RequestParam("q") String query,
+            @PageableDefault(size = 20) Pageable pageable
     ) {
-        return noteService.search(authentication.getName(), query);
+        return noteService.search(authentication.getName(), query, pageable);
     }
 
     @GetMapping("/{id}")
@@ -81,8 +87,11 @@ public class NoteController {
     }
 
     @GetMapping("/archived")
-    public List<NoteResponse> findAllArchived(Authentication authentication) {
-        return noteService.findArchived(authentication.getName());
+    public Page<NoteResponse> findAllArchived(
+        Authentication authentication,
+        @PageableDefault(size = 20) Pageable pageable
+    ) {
+        return noteService.findArchived(authentication.getName(), pageable);
     }
 
     @PatchMapping("/{id}/archive")

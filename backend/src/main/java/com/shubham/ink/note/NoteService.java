@@ -1,8 +1,12 @@
 package com.shubham.ink.note;
 
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,10 +22,12 @@ public class NoteService {
 
     private final UserRepository userRepository;
     private final NoteRepository noteRepository;
+    private final TagRepository tagRepository;
 
-    public NoteService(UserRepository userRepository, NoteRepository noteRepository) {
+    public NoteService(UserRepository userRepository, NoteRepository noteRepository, TagRepository tagRepository) {
         this.noteRepository = noteRepository;
         this.userRepository = userRepository;
+        this.tagRepository = tagRepository;
     }
 
     @Transactional
@@ -31,19 +37,20 @@ public class NoteService {
 
         Note note = new Note(
             user,
-            request.title(),
-            request.content()
+            request.title().trim(),
+            request.content().trim()
         );
+        note.replaceTags(resolveTags(user, request.tags()));
 
         return toResponse(noteRepository.save(note));
     }
 
     @Transactional(readOnly = true)
-    public List<NoteResponse> findAll(String email) {
+    public Page<NoteResponse> findAll(String email, Pageable pageable) {
 
         User user = getUserByEmail(email);
 
-        return noteRepository.findAllByUser_IdAndArchivedFalseOrderByPinnedDescUpdatedAtDesc(user.getId()).stream().map(this::toResponse).toList();
+        return noteRepository.findAllByUser_IdAndArchivedFalseOrderByPinnedDescUpdatedAtDesc(user.getId(), pageable).map(this::toResponse);
     }
 
     @Transactional(readOnly = true)
@@ -62,6 +69,7 @@ public class NoteService {
         Note note = noteRepository.findByIdAndUser_Id(noteId, user.getId()).orElseThrow(() -> new ResourceNotFoundException("Note not found"));
 
         note.update(request.title().trim(), request.content().trim());
+        note.replaceTags(resolveTags(user, request.tags()));
 
         return toResponse(note);
     }
@@ -121,23 +129,23 @@ public class NoteService {
     }
 
     @Transactional(readOnly = true)
-    public List<NoteResponse> findArchived(String email) {
+    public Page<NoteResponse> findArchived(String email, Pageable pageable) {
         User user = getUserByEmail(email);
 
-        return noteRepository.findAllByUser_IdAndArchivedTrueOrderByUpdatedAtDesc(user.getId()).stream().map(this::toResponse).toList();
+        return noteRepository.findAllByUser_IdAndArchivedTrueOrderByUpdatedAtDesc(user.getId(), pageable).map(this::toResponse);
     }
 
     @Transactional(readOnly = true)
-    public List<NoteResponse> search(String email, String query) {
+    public Page<NoteResponse> search(String email, String query, Pageable pageable) {
         User user = getUserByEmail(email);
 
         String normalizedQuery = query == null ? "" : query.trim();
 
         if (normalizedQuery.isBlank()) {
-            return List.of();
+            return Page.empty(pageable);
         }
 
-        return noteRepository.searchActiveNotes(user.getId(), normalizedQuery).stream().map(this::toResponse).toList();
+        return noteRepository.searchActiveNotes(user.getId(), normalizedQuery, pageable).map(this::toResponse);
     }
 
     private User getUserByEmail(String email) {
@@ -149,10 +157,42 @@ public class NoteService {
             note.getId(),
             note.getTitle(),
             note.getContent(),
+            note.getTags().stream()
+                .map(Tag::getName)
+                .collect(Collectors.toCollection(LinkedHashSet::new)),
             note.isArchived(),
             note.isPinned(),
             note.getCreatedAt(),
             note.getUpdatedAt()
         );
+    }
+
+    private Set<Tag> resolveTags(User user, Set<String> rawTags) {
+        Set<String> tagNames = normalizeTags(rawTags);
+
+        if (tagNames.isEmpty()) {
+            return Set.of();
+        }
+
+        Set<Tag> resolvedTags = new LinkedHashSet<>(tagRepository.findAllByUser_IdAndNameIn(user.getId(), tagNames));
+        Set<String> existingNames = resolvedTags.stream().map(Tag::getName).collect(Collectors.toSet());
+
+        tagNames.stream()
+            .filter(name -> !existingNames.contains(name))
+            .map(name -> new Tag(user, name))
+            .forEach(resolvedTags::add);
+
+        return resolvedTags;
+    }
+
+    private Set<String> normalizeTags(Set<String> rawTags) {
+        if (rawTags == null) {
+            return Set.of();
+        }
+
+        return rawTags.stream()
+            .map(tag -> tag == null ? "" : tag.trim().toLowerCase())
+            .filter(tag -> !tag.isBlank())
+            .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 }

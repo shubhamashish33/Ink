@@ -1,6 +1,6 @@
 import { computed, Injectable, signal } from '@angular/core';
 import { ApiService } from './api.service';
-import { Note, NoteRequest } from './models';
+import { Note, NoteRequest, PageResponse } from './models';
 
 @Injectable({ providedIn: 'root' })
 export class NotesStore {
@@ -21,15 +21,15 @@ export class NotesStore {
   loadActive() {
     const query = this.searchQuery().trim();
     const url = query ? `/api/notes/search?q=${encodeURIComponent(query)}` : '/api/notes';
-    this.api.request<Note[]>('get', url).subscribe({
-      next: (notes) => this.notes.set(notes),
+    this.api.request<PageResponse<Note>>('get', url).subscribe({
+      next: (page) => this.notes.set(page.content),
       error: (error) => this.api.setError(error),
     });
   }
 
   loadArchived() {
-    this.api.request<Note[]>('get', '/api/notes/archived').subscribe({
-      next: (notes) => this.archivedNotes.set(notes),
+    this.api.request<PageResponse<Note>>('get', '/api/notes/archived').subscribe({
+      next: (page) => this.archivedNotes.set(page.content),
       error: (error) => this.api.setError(error),
     });
   }

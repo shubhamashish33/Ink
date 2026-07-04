@@ -1,10 +1,13 @@
 package com.shubham.ink.note;
 
 import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.UUID;
 
 import com.shubham.ink.user.User;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -12,6 +15,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -46,6 +51,14 @@ public class Note {
 
     @Column(nullable = false)
     private boolean pinned = false;
+
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(
+        name = "note_tags",
+        joinColumns = @JoinColumn(name = "note_id"),
+        inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    private Set<Tag> tags = new LinkedHashSet<>();
 
     protected Note() {
     }
@@ -99,6 +112,10 @@ public class Note {
     public boolean isPinned() {
         return pinned;
     }
+
+    public Set<Tag> getTags() {
+        return tags;
+    }
     
     public void archive() {
         this.archived = true;
@@ -119,6 +136,11 @@ public class Note {
     public void update(String title, String content) {
         this.title = title;
         this.content = content;
+    }
+
+    public void replaceTags(Set<Tag> tags) {
+        this.tags.clear();
+        this.tags.addAll(tags);
     }
 
 }

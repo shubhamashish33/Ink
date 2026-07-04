@@ -9,6 +9,7 @@ export interface AuthUser {
 
 export interface AuthTokenResponse {
   accessToken: string;
+  refreshToken: string;
   tokenType: 'Bearer';
   expiresInMinutes: number;
   user: AuthUser;
@@ -29,6 +30,7 @@ export interface Note {
   id: string;
   title: string;
   content: string;
+  tags: string[];
   archived: boolean;
   pinned: boolean;
   createdAt: string;
@@ -38,4 +40,12 @@ export interface Note {
 export interface NoteRequest {
   title: string;
   content: string;
+}
+
+export interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
 }

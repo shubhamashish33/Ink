@@ -5,6 +5,7 @@ import { AuthTokenResponse, AuthUser, LoginRequest, RegisterRequest } from './mo
 @Injectable({ providedIn: 'root' })
 export class AuthStore {
   readonly token = signal<string | null>(localStorage.getItem('ink.accessToken'));
+  readonly refreshToken = signal<string | null>(localStorage.getItem('ink.refreshToken'));
   readonly user = signal<AuthUser | null>(null);
   readonly isAuthenticated = computed(() => !!this.token());
 
@@ -18,7 +19,9 @@ export class AuthStore {
     this.api.request<AuthTokenResponse>('post', '/api/auth/login', request).subscribe({
       next: (response) => {
         localStorage.setItem('ink.accessToken', response.accessToken);
+        localStorage.setItem('ink.refreshToken', response.refreshToken);
         this.token.set(response.accessToken);
+        this.refreshToken.set(response.refreshToken);
         this.user.set(response.user);
         this.api.clearError();
         afterLogin?.();
@@ -35,8 +38,14 @@ export class AuthStore {
   }
 
   logout() {
+    const refreshToken = this.refreshToken();
+    if (refreshToken) {
+      this.api.request<void>('post', '/api/auth/logout', { refreshToken }).subscribe();
+    }
     localStorage.removeItem('ink.accessToken');
+    localStorage.removeItem('ink.refreshToken');
     this.token.set(null);
+    this.refreshToken.set(null);
     this.user.set(null);
   }
 
