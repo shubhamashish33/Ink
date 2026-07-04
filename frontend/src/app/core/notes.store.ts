@@ -41,10 +41,14 @@ export class NotesStore {
   }
 
   search(value: string) {
-    this.searchQuery.set(value);
-    this.activeView.set('active');
+    this.setSearchQuery(value);
     this.clearSelection();
     this.loadActive();
+  }
+
+  setSearchQuery(value: string) {
+    this.searchQuery.set(value);
+    this.activeView.set('active');
   }
 
   select(note: Note) {
