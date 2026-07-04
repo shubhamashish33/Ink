@@ -137,7 +137,7 @@ public class NoteService {
             return List.of();
         }
 
-        return noteRepository.searchActiveNotes(user.getId(), query).stream().map(this::toResponse).toList();
+        return noteRepository.searchActiveNotes(user.getId(), normalizedQuery).stream().map(this::toResponse).toList();
     }
 
     private User getUserByEmail(String email) {

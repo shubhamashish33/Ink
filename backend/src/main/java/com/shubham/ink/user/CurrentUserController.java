@@ -1,6 +1,8 @@
 package com.shubham.ink.user;
 
 import com.shubham.ink.auth.dto.AuthUserResponse;
+import com.shubham.ink.common.exception.ResourceNotFoundException;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,7 +21,7 @@ public class CurrentUserController {
         String email = authentication.getName();
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalStateException("Authenticated user not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         return new AuthUserResponse(
                 user.getId(),
