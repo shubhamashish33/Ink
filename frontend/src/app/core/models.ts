@@ -40,6 +40,7 @@ export interface Note {
 export interface NoteRequest {
   title: string;
   content: string;
+  tags: string[];
 }
 
 export interface PageResponse<T> {

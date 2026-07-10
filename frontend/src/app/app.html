@@ -6,13 +6,13 @@
       </span>
       <div>
         <h1>Ink</h1>
-        <p>Private notes with backend-grade auth, search, and future RAG.</p>
+        <p>Notes, references, and retrieval-ready knowledge.</p>
       </div>
     </div>
 
     <div class="topbar-actions">
       @if (auth.isAuthenticated()) {
-        <span class="status-pill"><svg lucideShieldCheck class="icon"></svg> Secured</span>
+        <span class="status-pill"><svg lucideShieldCheck class="icon"></svg> Protected</span>
       }
       <button class="theme-toggle" type="button" [title]="theme.dark() ? 'Switch to light mode' : 'Switch to dark mode'" (click)="theme.toggle()">
         @if (theme.dark()) {
@@ -27,7 +27,7 @@
   </header>
 
   @if (api.error()) {
-    <section class="error-banner">{{ api.error() }}</section>
+    <section class="error-banner" [class.rate-limit]="api.rateLimited()">{{ api.error() }}</section>
   }
 
   @if (auth.isAuthenticated()) {
@@ -37,15 +37,15 @@
   } @else {
     <section class="auth-layout">
       <div class="auth-copy">
-        <span class="eyebrow"><svg lucideSparkles class="icon"></svg> Backend-first learning app</span>
-        <h2>Use your Spring Boot API like a real notes product.</h2>
+        <span class="eyebrow"><svg lucideSparkles class="icon"></svg> Backend-first notes</span>
+        <h2>Your private knowledge base starts here.</h2>
         <p>
-          Register, log in, create notes, pin important work, archive completed ideas, and search through the same endpoints you are building.
+          Ink is intentionally simple: secure auth, searchable notes, and a structure that can grow into uploads, semantic search, and RAG.
         </p>
         <div class="capability-grid" aria-label="Implemented backend capabilities">
           <span><svg lucideShieldCheck class="icon"></svg> JWT auth</span>
-          <span><svg lucideNotebook class="icon"></svg> Notes CRUD</span>
-          <span><svg lucideArchive class="icon"></svg> Archive and pin</span>
+          <span><svg lucideNotebook class="icon"></svg> Notes</span>
+          <span><svg lucideArchive class="icon"></svg> Archive</span>
           <span><svg lucideSearch class="icon"></svg> Search</span>
         </div>
       </div>

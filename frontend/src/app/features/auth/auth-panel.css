@@ -15,7 +15,7 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 18px;
-  background: color-mix(in srgb, var(--panel) 94%, transparent);
+  background: var(--panel);
   box-shadow: var(--shadow-panel);
 }
 
@@ -28,12 +28,13 @@
 .auth-badge {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   flex: 0 0 auto;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--accent-soft);
-  color: var(--accent-strong);
+  background: var(--panel-muted);
+  color: var(--accent);
 }
 
 .auth-header h2 {
@@ -42,23 +43,34 @@
   line-height: 1.2;
 }
 
-.auth-header p {
+.auth-header p,
+.rate-limit-note {
   margin: 4px 0 0;
   color: var(--muted);
   font-size: 13px;
 }
 
+.rate-limit-note {
+  margin: 0;
+  border: 1px solid var(--warning-border);
+  border-radius: 8px;
+  background: var(--warning-bg);
+  color: var(--warning);
+  padding: 10px 11px;
+  line-height: 1.45;
+}
+
 .segmented {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  padding: 4px;
+  gap: 4px;
+  padding: 3px;
   border-radius: 8px;
   background: var(--control);
 }
 
 .segmented button {
-  min-height: 38px;
+  min-height: 36px;
   border: 0;
   border-radius: 6px;
   background: transparent;
@@ -89,13 +101,13 @@ label {
   display: flex;
   align-items: center;
   gap: 9px;
-  min-height: 44px;
-  border: 1px solid var(--border-strong);
+  min-height: 42px;
+  border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--input);
   color: var(--subtle);
-  padding: 0 12px;
-  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+  padding: 0 11px;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 
 .input-shell:focus-within {
@@ -122,20 +134,20 @@ input::placeholder {
   justify-content: center;
   gap: 8px;
   min-height: 42px;
-  border: 0;
+  border: 1px solid var(--accent);
   border-radius: 8px;
   background: var(--accent);
   color: white;
   padding: 0 14px;
   font-weight: 800;
-  transition: background 160ms ease, transform 160ms ease;
 }
 
 .primary:hover {
   background: var(--accent-strong);
+  border-color: var(--accent-strong);
 }
 
 .primary:disabled {
-  opacity: 0.7;
+  opacity: 0.62;
   cursor: wait;
 }

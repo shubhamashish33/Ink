@@ -10,6 +10,15 @@ export class AuthStore {
   readonly isAuthenticated = computed(() => !!this.token());
 
   constructor(private readonly api: ApiService) {
+    window.addEventListener('ink-token-refreshed', (event) => {
+      const response = (event as CustomEvent<AuthTokenResponse>).detail;
+      this.token.set(response.accessToken);
+      this.refreshToken.set(response.refreshToken);
+      this.user.set(response.user);
+    });
+
+    window.addEventListener('ink-session-expired', () => this.clearSession());
+
     if (this.token()) {
       this.loadCurrentUser();
     }
@@ -42,11 +51,10 @@ export class AuthStore {
     if (refreshToken) {
       this.api.request<void>('post', '/api/auth/logout', { refreshToken }).subscribe();
     }
+
     localStorage.removeItem('ink.accessToken');
     localStorage.removeItem('ink.refreshToken');
-    this.token.set(null);
-    this.refreshToken.set(null);
-    this.user.set(null);
+    this.clearSession();
   }
 
   loadCurrentUser() {
@@ -54,5 +62,11 @@ export class AuthStore {
       next: (user) => this.user.set(user),
       error: () => this.logout(),
     });
+  }
+
+  private clearSession() {
+    this.token.set(null);
+    this.refreshToken.set(null);
+    this.user.set(null);
   }
 }

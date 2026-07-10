@@ -10,41 +10,39 @@
     </button>
   </section>
 
-  <section class="quick-stats" aria-label="Notes summary">
-    <div>
-      <strong>{{ notes.notes().length }}</strong>
-      <span>Active</span>
-    </div>
-    <div>
-      <strong>{{ notes.archivedNotes().length }}</strong>
-      <span>Archived</span>
-    </div>
-  </section>
-
-  <label class="search-row">
-    <svg lucideSearch class="search-icon"></svg>
-    <input type="search" placeholder="Search title or content" [ngModel]="notes.searchQuery()" (ngModelChange)="updateSearch($event)" />
-  </label>
-
-  <section class="nav" aria-label="Note views">
-    <button type="button" [class.active]="notes.activeView() === 'active'" (click)="notes.switchView('active')">
-      <svg lucideNotebook class="icon"></svg>
-      Notes
-    </button>
-    <button type="button" [class.active]="notes.activeView() === 'archived'" (click)="notes.switchView('archived')">
-      <svg lucideArchive class="icon"></svg>
-      Archive
-    </button>
-  </section>
-
   <button class="primary full" type="button" (click)="notes.clearSelection()">
     <svg lucidePlus class="icon"></svg>
     New note
   </button>
 
-  <section class="note-list">
+  <label class="search-row">
+    <svg lucideSearch class="search-icon"></svg>
+    <input type="search" placeholder="Search notes" [ngModel]="notes.searchQuery()" (ngModelChange)="updateSearch($event)" />
+  </label>
+
+  <section class="nav" aria-label="Note views">
+    <button type="button" [class.active]="notes.activeView() === 'active'" (click)="notes.switchView('active')">
+      <svg lucideNotebook class="icon"></svg>
+      <span>Notes</span>
+      <strong>{{ notes.notes().length }}</strong>
+    </button>
+    <button type="button" [class.active]="notes.activeView() === 'archived'" (click)="notes.switchView('archived')">
+      <svg lucideArchive class="icon"></svg>
+      <span>Archive</span>
+      <strong>{{ notes.archivedNotes().length }}</strong>
+    </button>
+  </section>
+
+  <section class="note-list" aria-label="Notes list">
+    <div class="list-heading">
+      <span>{{ notes.activeView() === 'active' ? 'Recent notes' : 'Archived notes' }}</span>
+      @if (notes.searchQuery()) {
+        <small>Filtered</small>
+      }
+    </div>
+
     @for (note of notes.visibleNotes(); track note.id) {
-      <button type="button" class="note-row" [class.selected]="notes.selectedNoteId() === note.id" (click)="notes.select(note)">
+      <button type="button" class="note-row" [class.selected]="notes.selectedNoteId() === note.id" (click)="notes.select(note)" (contextmenu)="openContextMenu($event, note)">
         <span class="note-row-top">
           <span class="row-title">{{ note.title }}</span>
           @if (note.pinned) {
@@ -52,6 +50,13 @@
           }
         </span>
         <span class="row-preview">{{ note.content }}</span>
+        @if (note.tags.length) {
+          <span class="tag-strip compact">
+            @for (tag of note.tags; track tag) {
+              <span class="tag-chip">#{{ tag }}</span>
+            }
+          </span>
+        }
         <span class="row-meta">
           <span><svg lucideClock class="meta-icon"></svg>{{ note.updatedAt | date: 'mediumDate' }}</span>
           @if (note.archived) {
@@ -63,45 +68,71 @@
       <div class="empty">
         <svg lucideFileText class="empty-icon"></svg>
         <strong>No notes here</strong>
-        <span>Create a note or try a different search.</span>
+        <span>Create a note or adjust your search.</span>
       </div>
     }
   </section>
+
+  @if (contextMenu(); as menu) {
+    <div class="context-menu" [style.left.px]="menu.x" [style.top.px]="menu.y" (click)="$event.stopPropagation()">
+      <button type="button" (click)="togglePin(menu.note)">
+        <svg lucidePin class="icon"></svg>
+        {{ menu.note.pinned ? 'Unpin note' : 'Pin note' }}
+      </button>
+      <button type="button" (click)="toggleArchive(menu.note)">
+        @if (menu.note.archived) {
+          <svg lucideArchiveRestore class="icon"></svg>
+          Restore note
+        } @else {
+          <svg lucideArchive class="icon"></svg>
+          Archive note
+        }
+      </button>
+      <button type="button" class="danger-item" (click)="deleteFromMenu(menu.note)">
+        <svg lucideTrash2 class="icon"></svg>
+        Delete note
+      </button>
+    </div>
+  }
 </aside>
 
 <section class="workspace">
   <form class="editor" (ngSubmit)="notes.save()">
     <div class="editor-topbar">
-      <div class="editor-title-wrap">
-        <span class="document-icon"><svg lucideFileText class="icon"></svg></span>
-        <input class="title-input" name="note-title" placeholder="Untitled note" [ngModel]="notes.draft().title" (ngModelChange)="notes.updateDraft('title', $event)" />
+      <div class="editor-kicker">
+        <svg lucideFileText class="icon"></svg>
+        @if (notes.selectedNote()) {
+          <span>Document</span>
+        } @else {
+          <span>Draft</span>
+        }
       </div>
 
       @if (notes.selectedNote()) {
         <div class="actions">
           @if (notes.selectedNote()?.pinned) {
-            <button type="button" class="ghost" (click)="notes.unpin(notes.selectedNote()!)">
+            <button type="button" class="ghost" (click)="notes.unpin(notes.selectedNote()!)" title="Unpin note">
               <svg lucidePin class="icon"></svg>
               Unpin
             </button>
           } @else {
-            <button type="button" class="ghost" (click)="notes.pin(notes.selectedNote()!)">
+            <button type="button" class="ghost" (click)="notes.pin(notes.selectedNote()!)" title="Pin note">
               <svg lucidePin class="icon"></svg>
               Pin
             </button>
           }
           @if (notes.selectedNote()?.archived) {
-            <button type="button" class="ghost" (click)="notes.unarchive(notes.selectedNote()!)">
+            <button type="button" class="ghost" (click)="notes.unarchive(notes.selectedNote()!)" title="Restore note">
               <svg lucideArchiveRestore class="icon"></svg>
               Restore
             </button>
           } @else {
-            <button type="button" class="ghost" (click)="notes.archive(notes.selectedNote()!)">
+            <button type="button" class="ghost" (click)="notes.archive(notes.selectedNote()!)" title="Archive note">
               <svg lucideArchive class="icon"></svg>
               Archive
             </button>
           }
-          <button type="button" class="danger" (click)="notes.delete(notes.selectedNote()!)">
+          <button type="button" class="danger" (click)="notes.delete(notes.selectedNote()!)" title="Delete note">
             <svg lucideTrash2 class="icon"></svg>
             Delete
           </button>
@@ -109,7 +140,26 @@
       }
     </div>
 
-    <textarea name="note-content" placeholder="Start writing. Keep it clear, searchable, and useful to future you." [ngModel]="notes.draft().content" (ngModelChange)="notes.updateDraft('content', $event)"></textarea>
+    <input class="title-input" name="note-title" placeholder="Untitled" [ngModel]="notes.draft().title" (ngModelChange)="notes.updateDraft('title', $event)" />
+
+    <section class="tag-editor" aria-label="Note tags">
+      <div class="tag-label">
+        <svg lucideTag class="icon"></svg>
+        <span>Tags</span>
+      </div>
+      <div class="tag-control">
+        @if (notes.draft().tags.length) {
+          <div class="tag-strip">
+            @for (tag of notes.draft().tags; track tag) {
+              <span class="tag-chip">#{{ tag }}</span>
+            }
+          </div>
+        }
+        <input class="tag-input" name="note-tags" placeholder="backend, java, ideas" [ngModel]="notes.tagsInput()" (ngModelChange)="notes.updateTagsFromText($event)" />
+      </div>
+    </section>
+
+    <textarea name="note-content" placeholder="Write anything. Keep it searchable. Future RAG will thank you." [ngModel]="notes.draft().content" (ngModelChange)="notes.updateDraft('content', $event)"></textarea>
 
     <div class="editor-footer">
       <span>
@@ -126,3 +176,7 @@
     </div>
   </form>
 </section>
+
+
+
+

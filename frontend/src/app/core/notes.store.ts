@@ -9,7 +9,8 @@ export class NotesStore {
   readonly notes = signal<Note[]>([]);
   readonly archivedNotes = signal<Note[]>([]);
   readonly selectedNoteId = signal<string | null>(null);
-  readonly draft = signal<NoteRequest>({ title: '', content: '' });
+  readonly draft = signal<NoteRequest>({ title: '', content: '', tags: [] });
+  readonly tagsInput = signal('');
   readonly visibleNotes = computed(() => (this.activeView() === 'active' ? this.notes() : this.archivedNotes()));
   readonly selectedNote = computed(() => {
     const id = this.selectedNoteId();
@@ -53,21 +54,34 @@ export class NotesStore {
 
   select(note: Note) {
     this.selectedNoteId.set(note.id);
-    this.draft.set({ title: note.title, content: note.content });
+    const tags = note.tags ?? [];
+    this.draft.set({ title: note.title, content: note.content, tags });
+    this.tagsInput.set(tags.join(', '));
   }
 
   clearSelection() {
     this.selectedNoteId.set(null);
-    this.draft.set({ title: '', content: '' });
+    this.draft.set({ title: '', content: '', tags: [] });
+    this.tagsInput.set('');
   }
 
-  updateDraft(field: keyof NoteRequest, value: string) {
+  updateDraft(field: 'title' | 'content', value: string) {
     this.draft.update((draft) => ({ ...draft, [field]: value }));
+  }
+
+  updateTagsFromText(value: string) {
+    this.tagsInput.set(value);
+    this.draft.update((draft) => ({ ...draft, tags: this.normalizeTags(value) }));
   }
 
   save() {
     const selected = this.selectedNote();
-    const body = { title: this.draft().title.trim(), content: this.draft().content.trim() };
+    const draft = this.draft();
+    const body = {
+      title: draft.title.trim(),
+      content: draft.content.trim(),
+      tags: this.normalizeTags(draft.tags),
+    };
 
     if (!body.title || !body.content) {
       this.api.error.set('Title and content are required.');
@@ -142,4 +156,17 @@ export class NotesStore {
     this.select(note);
     this.api.clearError();
   }
+
+  private normalizeTags(tags: string[] | string) {
+    const values = Array.isArray(tags) ? tags : tags.split(',');
+
+    return Array.from(
+      new Set(
+        values
+          .map((tag) => tag.trim().toLowerCase())
+          .filter(Boolean),
+      ),
+    );
+  }
 }
+

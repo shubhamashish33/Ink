@@ -2,8 +2,8 @@
   <div class="auth-header">
     <span class="auth-badge"><svg lucideKeyRound class="icon"></svg></span>
     <div>
-      <h2>{{ mode() === 'login' ? 'Welcome back' : 'Create your Ink account' }}</h2>
-      <p>{{ mode() === 'login' ? 'Continue to your private workspace.' : 'Start with secure notes and JWT auth.' }}</p>
+      <h2>{{ mode() === 'login' ? 'Welcome back' : 'Create account' }}</h2>
+      <p>{{ mode() === 'login' ? 'Open your notes workspace.' : 'Create a private Ink workspace.' }}</p>
     </div>
   </div>
 
@@ -11,6 +11,10 @@
     <button type="button" [class.active]="mode() === 'login'" (click)="setMode('login')">Login</button>
     <button type="button" [class.active]="mode() === 'register'" (click)="setMode('register')">Register</button>
   </div>
+
+  @if (api.rateLimited()) {
+    <p class="rate-limit-note">Authentication is cooling down for a moment. This protects the API from repeated login/register attempts.</p>
+  }
 
   @if (mode() === 'login') {
     <form (ngSubmit)="login()">
@@ -28,9 +32,9 @@
           <input name="login-password" type="password" autocomplete="current-password" placeholder="Your password" [ngModel]="loginForm().password" (ngModelChange)="updateLogin('password', $event)" />
         </span>
       </label>
-      <button class="primary" type="submit" [disabled]="api.loading()">
+      <button class="primary" type="submit" [disabled]="api.loading() || api.rateLimited()">
         <svg lucideShieldCheck class="icon"></svg>
-        Login securely
+        Login
       </button>
     </form>
   } @else {
@@ -56,7 +60,7 @@
           <input name="register-password" type="password" autocomplete="new-password" placeholder="At least 8 characters" [ngModel]="registerForm().password" (ngModelChange)="updateRegister('password', $event)" />
         </span>
       </label>
-      <button class="primary" type="submit" [disabled]="api.loading()">
+      <button class="primary" type="submit" [disabled]="api.loading() || api.rateLimited()">
         <svg lucideShieldCheck class="icon"></svg>
         Create account
       </button>

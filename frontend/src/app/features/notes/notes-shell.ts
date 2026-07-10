@@ -1,12 +1,32 @@
 import { DatePipe } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, HostListener, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { LucideArchive, LucideArchiveRestore, LucideClock, LucideFileText, LucideLogOut, LucideNotebook, LucidePin, LucidePlus, LucideSave, LucideSearch, LucideTrash2, } from '@lucide/angular';
+import {
+  LucideArchive,
+  LucideArchiveRestore,
+  LucideClock,
+  LucideFileText,
+  LucideLogOut,
+  LucideNotebook,
+  LucidePin,
+  LucidePlus,
+  LucideSave,
+  LucideSearch,
+  LucideTag,
+  LucideTrash2,
+} from '@lucide/angular';
+import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { ApiService } from '../../core/api.service';
 import { AuthStore } from '../../core/auth.store';
 import { Note } from '../../core/models';
 import { NotesStore } from '../../core/notes.store';
-import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
+
+interface NoteContextMenu {
+  note: Note;
+  x: number;
+  y: number;
+}
 
 @Component({
   selector: 'app-notes-shell',
@@ -23,21 +43,34 @@ import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
     LucidePlus,
     LucideSave,
     LucideSearch,
+    LucideTag,
     LucideTrash2,
   ],
   templateUrl: './notes-shell.html',
   styleUrl: './notes-shell.css',
 })
 export class NotesShell {
+  readonly contextMenu = signal<NoteContextMenu | null>(null);
   private readonly searchInput$ = new Subject<string>();
+
   constructor(
     readonly auth: AuthStore,
     readonly notes: NotesStore,
     readonly api: ApiService,
   ) {
-    this.searchInput$.pipe(debounceTime(300), distinctUntilChanged(),).subscribe((value) => {
-      this.notes.search(value);
-    })
+    this.searchInput$
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe((value) => this.notes.search(value));
+  }
+
+  @HostListener('document:click')
+  closeContextMenu() {
+    this.contextMenu.set(null);
+  }
+
+  @HostListener('document:keydown.escape')
+  closeContextMenuOnEscape() {
+    this.closeContextMenu();
   }
 
   logout() {
@@ -52,7 +85,30 @@ export class NotesShell {
     this.searchInput$.next(value);
   }
 
+  openContextMenu(event: MouseEvent, note: Note) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.notes.select(note);
+    this.contextMenu.set({ note, x: event.clientX, y: event.clientY });
+  }
+
+  togglePin(note: Note) {
+    note.pinned ? this.notes.unpin(note) : this.notes.pin(note);
+    this.closeContextMenu();
+  }
+
+  toggleArchive(note: Note) {
+    note.archived ? this.notes.unarchive(note) : this.notes.archive(note);
+    this.closeContextMenu();
+  }
+
+  deleteFromMenu(note: Note) {
+    this.notes.delete(note);
+    this.closeContextMenu();
+  }
+
   trackNote(_: number, note: Note) {
     return note.id;
   }
 }
+
