@@ -16,15 +16,18 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JsonAuthenticationEntryPoint authenticationEntryPoint;
     private final JsonAccessDeniedHandler accessDeniedHandler;
+    private final RateLimitFilter rateLimitFilter;
 
     public SecurityConfig(
         JwtAuthenticationFilter jwtAuthenticationFilter,
         JsonAuthenticationEntryPoint authenticationEntryPoint,
-        JsonAccessDeniedHandler accessDeniedHandler
+        JsonAccessDeniedHandler accessDeniedHandler,
+        RateLimitFilter rateLimitFilter
     ) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.accessDeniedHandler = accessDeniedHandler;
+        this.rateLimitFilter = rateLimitFilter;
     }
     
     @Bean
@@ -45,7 +48,8 @@ public class SecurityConfig {
                 )
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(jwtAuthenticationFilter, RateLimitFilter.class)
                 .build();
     }
 

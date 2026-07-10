@@ -29,6 +29,9 @@ app:
     secret: ${JWT_SECRET}
     access-token-ttl-minutes: ${JWT_ACCESS_TOKEN_TTL_MINUTES:60}
     refresh-token-ttl-days: ${JWT_REFRESH_TOKEN_TTL_DAYS:30}
+  rate-limit:
+    auth-capacity: ${RATE_LIMIT_AUTH_CAPACITY:5}
+    auth-refill-minutes: ${RATE_LIMIT_AUTH_REFILL_MINUTES:1}
 
 management:
   endpoints:

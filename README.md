@@ -9,6 +9,9 @@ Ink is a backend-first AI notes application built to learn production-style Java
 - Maven
 - PostgreSQL 16 with pgvector
 - Flyway
+- Spring Security with JWT authentication
+- Bucket4j for in-memory rate limiting
+- Testcontainers for integration-style backend tests
 - Docker Compose
 - Angular standalone components with signals
 - Nginx for serving the production frontend build
@@ -34,6 +37,28 @@ Copy-Item .env.example .env
 ```
 
 The `.env` file is intentionally ignored by Git because it contains local machine settings and secrets.
+
+Important environment variables:
+
+```env
+POSTGRES_DB=ink
+POSTGRES_USER=ink_user
+POSTGRES_PASSWORD=change_me
+POSTGRES_PORT=5433
+
+SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5433/ink
+SPRING_DATASOURCE_USERNAME=ink_user
+SPRING_DATASOURCE_PASSWORD=change_me
+
+JWT_SECRET=replace_with_at_least_256_bit_secret
+JWT_ACCESS_TOKEN_TTL_MINUTES=60
+JWT_REFRESH_TOKEN_TTL_DAYS=30
+
+RATE_LIMIT_AUTH_CAPACITY=5
+RATE_LIMIT_AUTH_REFILL_MINUTES=1
+```
+
+`JWT_SECRET` must be replaced in your local `.env`. Do not commit real secrets.
 
 ## Run Full App With Docker
 
@@ -129,6 +154,8 @@ cd backend
 .\mvnw.cmd test
 ```
 
+Backend tests use Testcontainers and start a temporary `pgvector/pgvector:pg16` PostgreSQL container automatically. Docker Desktop must be running, but the local Compose database does not need to be started.
+
 Run frontend tests:
 
 ```powershell
@@ -156,3 +183,70 @@ docker compose down -v
 ```
 
 Use `down -v` carefully. It deletes local database data.
+
+## API Features
+
+### Authentication
+
+Current auth endpoints:
+
+```text
+POST /api/auth/register
+POST /api/auth/login
+POST /api/auth/refresh
+POST /api/auth/logout
+GET  /api/me
+```
+
+Login returns an access token and refresh token. Access tokens are sent as:
+
+```http
+Authorization: Bearer <access-token>
+```
+
+Refresh tokens are stored server-side as hashes and rotated when `/api/auth/refresh` is called.
+
+### Notes
+
+Current note endpoints:
+
+```text
+GET    /api/notes?page=0&size=20
+GET    /api/notes/search?q=keyword&page=0&size=20
+GET    /api/notes/archived?page=0&size=20
+GET    /api/notes/{id}
+POST   /api/notes
+PUT    /api/notes/{id}
+DELETE /api/notes/{id}
+PATCH  /api/notes/{id}/archive
+PATCH  /api/notes/{id}/unarchive
+PATCH  /api/notes/{id}/pin
+PATCH  /api/notes/{id}/unpin
+```
+
+List, archived, and search endpoints return a Spring `Page` response. The actual notes are inside the `content` field.
+
+### Rate Limiting
+
+Auth endpoints are protected by an in-memory Bucket4j rate limiter:
+
+```text
+POST /api/auth/login
+POST /api/auth/register
+```
+
+The default limit is:
+
+```text
+5 requests per IP per 1 minute
+```
+
+When the limit is exceeded, the API returns:
+
+```text
+429 Too Many Requests
+```
+
+with the same JSON error shape used by the rest of the backend.
+
+This rate limiter is intentionally in-memory for the current learning phase. It works for a single backend instance. For multi-instance deployment later, move rate-limit state to Redis so every backend container shares the same counters.
