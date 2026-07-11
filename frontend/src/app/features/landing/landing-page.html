@@ -86,3 +86,33 @@
     <p>Keep important notes visible and move old notes out of the main view.</p>
   </article>
 </section>
+
+@if (whatsNewOpen()) {
+  <div class="whats-new-backdrop" role="presentation" (click)="dismissWhatsNew()">
+    <section class="whats-new" role="dialog" aria-modal="true" aria-labelledby="whats-new-title" (click)="$event.stopPropagation()">
+      <button class="whats-new-close" type="button" aria-label="Dismiss what's new" (click)="dismissWhatsNew()">
+        <svg lucideX class="icon"></svg>
+      </button>
+      <span class="whats-new-badge"><svg lucideShieldCheck class="icon"></svg> What's new</span>
+      <h2 id="whats-new-title">A sharper, safer Ink.</h2>
+      <p class="whats-new-intro">Two recent improvements make your workspace faster to use and more private by design.</p>
+      <div class="whats-new-items">
+        <article>
+          <span class="whats-new-icon"><svg lucideSearch class="icon"></svg></span>
+          <div>
+            <h3>Command Palette</h3>
+            <p>Press <kbd>Ctrl K</kbd> to jump to notes, create a note, or run quick actions.</p>
+          </div>
+        </article>
+        <article>
+          <span class="whats-new-icon"><svg lucideShieldCheck class="icon"></svg></span>
+          <div>
+            <h3>Encrypted notes</h3>
+            <p>Your login password unlocks notes locally. The server stores encrypted note content.</p>
+          </div>
+        </article>
+      </div>
+      <button class="primary-link whats-new-action" type="button" (click)="dismissWhatsNew()">Got it</button>
+    </section>
+  </div>
+}

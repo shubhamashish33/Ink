@@ -296,6 +296,124 @@
   margin: 0;
 }
 
+.whats-new-backdrop {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--text) 28%, transparent);
+  padding: 20px;
+  backdrop-filter: blur(6px);
+}
+
+.whats-new {
+  position: relative;
+  width: min(540px, 100%);
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  background: var(--panel);
+  box-shadow: 0 24px 70px color-mix(in srgb, var(--text) 22%, transparent);
+  padding: 30px;
+}
+
+.whats-new-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-muted);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.whats-new-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.whats-new h2 {
+  margin: 16px 42px 8px 0;
+  color: var(--text);
+  font-size: clamp(28px, 5vw, 40px);
+  line-height: 1.05;
+}
+
+.whats-new-intro {
+  margin: 0 0 22px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.whats-new-items {
+  display: grid;
+  gap: 10px;
+}
+
+.whats-new-items article {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 13px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-muted);
+  padding: 14px;
+}
+
+.whats-new-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.whats-new-items h3,
+.whats-new-items p {
+  margin: 0;
+}
+
+.whats-new-items h3 {
+  font-size: 15px;
+}
+
+.whats-new-items p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.whats-new kbd {
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--text);
+  padding: 1px 5px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.whats-new-action {
+  width: 100%;
+  margin-top: 22px;
+  cursor: pointer;
+}
+
 .features h3 {
   font-size: 15px;
 }
