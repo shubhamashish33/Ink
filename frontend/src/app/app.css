@@ -199,6 +199,26 @@ h1 {
   min-width: 0;
 }
 
+.encryption-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  border: 1px solid #86c99a;
+  border-radius: 8px;
+  background: #edf9f0;
+  color: #24703b;
+  padding: 0 9px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.app-shell.dark .encryption-status {
+  border-color: #315f3e;
+  background: #172b1d;
+  color: #7fda99;
+}
+
 .header-avatar {
   display: grid;
   place-items: center;
@@ -446,6 +466,16 @@ h1 {
   }
 
   .header-utility {
+    display: none;
+  }
+
+  .encryption-status {
+    width: 34px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .encryption-status > span {
     display: none;
   }
 

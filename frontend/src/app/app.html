@@ -28,6 +28,10 @@
 
     <div class="topbar-actions">
       @if (auth.isAuthenticated()) {
+        <span class="encryption-status" title="Note content is encrypted before it is stored">
+          <svg lucideShieldCheck class="icon"></svg>
+          <span>Encrypted</span>
+        </span>
         <div class="header-user">
           <span class="header-avatar" aria-hidden="true">{{ auth.user()?.displayName?.charAt(0) || 'I' }}</span>
           <span class="header-user-copy">
