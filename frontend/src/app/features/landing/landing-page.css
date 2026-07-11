@@ -268,7 +268,7 @@
 
 .features {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
   width: min(1120px, calc(100% - 40px));
   margin: 0 auto;
@@ -289,6 +289,10 @@
   width: 20px;
   height: 20px;
   color: var(--accent);
+}
+
+.encryption-feature-icon {
+  color: #2f8a4a;
 }
 
 .features h3,

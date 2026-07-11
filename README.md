@@ -15,6 +15,7 @@ Ink is a backend-first AI notes application built to learn production-style Java
 - Docker Compose
 - Angular standalone components with signals
 - Nginx for serving the production frontend build
+- Client-side note encryption with AES-GCM and PBKDF2-derived keys
 
 ## Project Structure
 
@@ -183,6 +184,15 @@ docker compose down -v
 ```
 
 Use `down -v` carefully. It deletes local database data.
+
+## User-facing Features
+
+- Command Palette: press `Ctrl K` (or `Cmd K` on macOS) to search notes and run quick actions.
+- Encrypted notes: after login, note titles, content, and tags are encrypted in the client before they are sent to the backend. The server stores the encrypted payload and cannot search new encrypted notes; search runs after client-side decryption.
+- Encryption status: authenticated users see an `Encrypted` mark in the top bar.
+- Landing-page What's New popup and workspace preview introduce recent features to new visitors.
+
+The login password is used as the user's unlock password. The raw password is not persisted by the frontend; the derived encryption state is held only in memory and is cleared on logout. Forgotten passwords cannot recover encrypted notes.
 
 ## API Features
 
