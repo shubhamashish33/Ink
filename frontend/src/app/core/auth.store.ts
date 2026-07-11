@@ -2,6 +2,7 @@ import { computed, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { ApiService } from './api.service';
 import { AuthTokenResponse, AuthUser, LoginRequest, RegisterRequest } from './models';
+import { CryptoService } from './crypto.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthStore {
@@ -13,6 +14,7 @@ export class AuthStore {
   constructor(
     private readonly api: ApiService,
     private readonly router: Router,
+    private readonly crypto: CryptoService,
   ) {
     window.addEventListener('ink-token-refreshed', (event) => {
       const response = (event as CustomEvent<AuthTokenResponse>).detail;
@@ -36,6 +38,7 @@ export class AuthStore {
         this.token.set(response.accessToken);
         this.refreshToken.set(response.refreshToken);
         this.user.set(response.user);
+        this.crypto.unlock(request.password);
         this.api.clearError();
         afterLogin?.();
       },
@@ -76,6 +79,7 @@ export class AuthStore {
     localStorage.removeItem('ink.accessToken');
     localStorage.removeItem('ink.refreshToken');
     this.clearSession();
+    this.crypto.lock();
     void this.router.navigateByUrl('/login');
   }
 }

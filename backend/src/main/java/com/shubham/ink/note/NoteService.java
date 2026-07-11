@@ -35,11 +35,9 @@ public class NoteService {
 
         User user = getUserByEmail(email);
 
-        Note note = new Note(
-            user,
-            request.title().trim(),
-            request.content().trim()
-        );
+        Note note = request.encryptedPayload() != null
+            ? new Note(user, request.encryptedPayload())
+            : new Note(user, request.title().trim(), request.content().trim());
         note.replaceTags(resolveTags(user, request.tags()));
 
         return toResponse(noteRepository.save(note));
@@ -68,8 +66,12 @@ public class NoteService {
 
         Note note = noteRepository.findByIdAndUser_Id(noteId, user.getId()).orElseThrow(() -> new ResourceNotFoundException("Note not found"));
 
-        note.update(request.title().trim(), request.content().trim());
-        note.replaceTags(resolveTags(user, request.tags()));
+        if (request.encryptedPayload() != null) {
+            note.update(request.encryptedPayload());
+        } else {
+            note.update(request.title().trim(), request.content().trim());
+            note.replaceTags(resolveTags(user, request.tags()));
+        }
 
         return toResponse(note);
     }
@@ -145,6 +147,8 @@ public class NoteService {
             return Page.empty(pageable);
         }
 
+        // Legacy plaintext rows remain searchable for compatibility. New
+        // encrypted rows are searched client-side after decryption.
         return noteRepository.searchActiveNotes(user.getId(), normalizedQuery, pageable).map(this::toResponse);
     }
 
@@ -157,9 +161,8 @@ public class NoteService {
             note.getId(),
             note.getTitle(),
             note.getContent(),
-            note.getTags().stream()
-                .map(Tag::getName)
-                .collect(Collectors.toCollection(LinkedHashSet::new)),
+            note.getTags().stream().map(Tag::getName).collect(Collectors.toCollection(LinkedHashSet::new)),
+            note.getEncryptedPayload(),
             note.isArchived(),
             note.isPinned(),
             note.getCreatedAt(),

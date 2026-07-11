@@ -34,10 +34,13 @@ public class Note {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false, length = 255)
+    @Column(name = "encrypted_payload", columnDefinition = "TEXT")
+    private String encryptedPayload;
+
+    @Column(length = 255)
     private String title;
-    
-    @Column(nullable = false)
+
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     @Column(name = "created_at", nullable = false)
@@ -61,6 +64,11 @@ public class Note {
     private Set<Tag> tags = new LinkedHashSet<>();
 
     protected Note() {
+    }
+
+    public Note(User user, String encryptedPayload) {
+        this.user = user;
+        this.encryptedPayload = encryptedPayload;
     }
 
     public Note(User user, String title, String content) {
@@ -89,13 +97,12 @@ public class Note {
         return id;
     }
 
-    public String getTitle() {
-        return title;
+    public String getEncryptedPayload() {
+        return encryptedPayload;
     }
 
-    public String getContent() {
-        return content;
-    }
+    public String getTitle() { return title; }
+    public String getContent() { return content; }
 
     public Instant getCreatedAt() {
         return createdAt;
@@ -133,14 +140,11 @@ public class Note {
         this.pinned = false;
     }
 
-    public void update(String title, String content) {
-        this.title = title;
-        this.content = content;
+    public void update(String encryptedPayload) {
+        this.encryptedPayload = encryptedPayload;
     }
 
-    public void replaceTags(Set<Tag> tags) {
-        this.tags.clear();
-        this.tags.addAll(tags);
-    }
+    public void update(String title, String content) { this.title = title; this.content = content; }
+    public void replaceTags(Set<Tag> tags) { this.tags.clear(); this.tags.addAll(tags); }
 
 }
