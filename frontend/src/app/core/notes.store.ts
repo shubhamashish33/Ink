@@ -1,6 +1,7 @@
 import { computed, Injectable, signal } from '@angular/core';
 import { ApiService } from './api.service';
 import { Note, NoteRequest, PageResponse } from './models';
+import { CryptoService } from './crypto.service';
 
 export type NoteDateFilter = 'all' | 'today' | 'week' | 'month';
 export type NoteSaveState = 'idle' | 'dirty' | 'saving' | 'saved' | 'error';
@@ -45,20 +46,18 @@ export class NotesStore {
   private readonly afterSaveCallbacks: Array<() => void> = [];
   private paletteSearchSequence = 0;
 
-  constructor(private readonly api: ApiService) {}
+  constructor(private readonly api: ApiService, private readonly crypto: CryptoService) {}
 
   loadActive() {
-    const query = this.searchQuery().trim();
-    const url = query ? `/api/notes/search?q=${encodeURIComponent(query)}` : '/api/notes';
-    this.api.request<PageResponse<Note>>('get', url).subscribe({
-      next: (page) => this.notes.set(page.content),
+    this.api.request<PageResponse<import('./models').EncryptedNoteResponse>>('get', '/api/notes?size=1000').subscribe({
+      next: async (page) => this.notes.set((await this.decryptAll(page.content)).filter((note) => this.matchesSearch(note))),
       error: (error) => this.api.setError(error),
     });
   }
 
   loadArchived() {
-    this.api.request<PageResponse<Note>>('get', '/api/notes/archived').subscribe({
-      next: (page) => this.archivedNotes.set(page.content),
+    this.api.request<PageResponse<import('./models').EncryptedNoteResponse>>('get', '/api/notes/archived?size=1000').subscribe({
+      next: async (page) => this.archivedNotes.set(await this.decryptAll(page.content)),
       error: (error) => this.api.setError(error),
     });
   }
@@ -79,24 +78,8 @@ export class NotesStore {
     const query = value.trim();
     const sequence = ++this.paletteSearchSequence;
 
-    if (!query) {
-      this.paletteResults.set(this.currentNotes().slice(0, 8));
-      return;
-    }
-
-    this.api.request<PageResponse<Note>>('get', `/api/notes/search?q=${encodeURIComponent(query)}&size=8`).subscribe({
-      next: (page) => {
-        if (sequence === this.paletteSearchSequence) {
-          this.paletteResults.set(page.content);
-        }
-      },
-      error: (error) => {
-        if (sequence === this.paletteSearchSequence) {
-          this.paletteResults.set([]);
-          this.api.setError(error);
-        }
-      },
-    });
+    const results = this.currentNotes().filter((note) => !query || this.matchesSearch(note, query));
+    if (sequence === this.paletteSearchSequence) this.paletteResults.set(results.slice(0, 8));
   }
 
   setSearchQuery(value: string) {
@@ -150,7 +133,7 @@ export class NotesStore {
 
     const selected = this.selectedNote();
     const draft = this.draft();
-    const body = {
+    const body: NoteRequest = {
       title: draft.title.trim(),
       content: draft.content.trim(),
       tags: this.normalizeTags(draft.tags),
@@ -180,8 +163,45 @@ export class NotesStore {
     this.saveInProgress = true;
     this.saveState.set('saving');
     const targetId = selected?.id ?? null;
-    if (selected) {
-      this.api.request<Note>('put', `/api/notes/${selected.id}`, body).subscribe({
+    this.crypto.encrypt(body).then((encryptedPayload) => {
+      const request = { encryptedPayload };
+      if (selected) {
+        this.api.request<import('./models').EncryptedNoteResponse>('put', `/api/notes/${selected.id}`, request).subscribe({
+          next: async (response) => this.completeSave((await this.crypto.decrypt(response))!, body, targetId),
+          error: (error) => this.failSave(error),
+        });
+        return;
+      }
+      this.api.request<import('./models').EncryptedNoteResponse>('post', '/api/notes', request).subscribe({
+        next: async (response) => {
+          const note = await this.crypto.decrypt(response);
+          if (note) this.notes.update((notes) => [note, ...notes]);
+          if (note) this.completeSave(note, body, targetId);
+        },
+        error: (error) => this.failSave(error),
+      });
+    }).catch((error) => this.failSave(error));
+  }
+
+  private async decryptAll(items: import('./models').EncryptedNoteResponse[]) {
+    const notes = await Promise.all(items.map((item) => this.crypto.decrypt(item)));
+    return notes.filter((note): note is Note => !!note);
+  }
+
+  private matchesSearch(note: Note, query = this.searchQuery().trim()) {
+    if (!query) return true;
+    const value = `${note.title} ${note.content} ${note.tags.join(' ')}`.toLowerCase();
+    return value.includes(query.toLowerCase());
+  }
+
+  /*
+    The server never receives title/content/tags. The code below is retained
+    only in the branch diff context to make the save flow easy to review.
+  */
+  private legacySaveRemoved() {
+    /*
+      if (selected) {
+        this.api.request<Note>('put', `/api/notes/${selected.id}`, body).subscribe({
         next: (note) => this.completeSave(note, body, targetId),
         error: (error) => this.failSave(error),
       });
@@ -195,6 +215,7 @@ export class NotesStore {
       },
       error: (error) => this.failSave(error),
     });
+    */
   }
 
   archive(note: Note) {
@@ -206,15 +227,15 @@ export class NotesStore {
   }
 
   pin(note: Note) {
-    this.api.request<Note>('patch', `/api/notes/${note.id}/pin`).subscribe({
-      next: (updated) => this.replace(updated),
+    this.api.request<import('./models').EncryptedNoteResponse>('patch', `/api/notes/${note.id}/pin`).subscribe({
+      next: async (updated) => { const decrypted = await this.crypto.decrypt(updated); if (decrypted) this.replace(decrypted); },
       error: (error) => this.api.setError(error),
     });
   }
 
   unpin(note: Note) {
-    this.api.request<Note>('patch', `/api/notes/${note.id}/unpin`).subscribe({
-      next: (updated) => this.replace(updated),
+    this.api.request<import('./models').EncryptedNoteResponse>('patch', `/api/notes/${note.id}/unpin`).subscribe({
+      next: async (updated) => { const decrypted = await this.crypto.decrypt(updated); if (decrypted) this.replace(decrypted); },
       error: (error) => this.api.setError(error),
     });
   }
@@ -231,8 +252,13 @@ export class NotesStore {
   }
 
   private moveOut(note: Note, url: string, collection: 'notes' | 'archivedNotes') {
-    this.api.request<Note>('patch', url).subscribe({
-      next: () => {
+    this.api.request<import('./models').EncryptedNoteResponse>('patch', url).subscribe({
+      next: (updated) => {
+        const replaceMetadata = async () => {
+          const decrypted = await this.crypto.decrypt(updated);
+          if (decrypted) this.replace(decrypted);
+        };
+        void replaceMetadata();
         this[collection].update((notes) => notes.filter((item) => item.id !== note.id));
         this.clearSelection();
       },

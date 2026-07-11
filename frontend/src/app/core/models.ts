@@ -37,6 +37,15 @@ export interface Note {
   updatedAt: string;
 }
 
+export interface EncryptedNoteResponse {
+  id: string;
+  encryptedPayload: string | null;
+  archived: boolean;
+  pinned: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface NoteRequest {
   title: string;
   content: string;
