@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Ink app icon">
+  <rect width="512" height="512" rx="104" fill="#6f5cff"/>
+  <path d="M143 104h164c60 0 109 49 109 109v209c0 16-18 26-32 17l-42-26c-18-11-38-17-59-17H143c-25 0-45-20-45-45V149c0-25 20-45 45-45Z" fill="none" stroke="#fff" stroke-width="43" stroke-linejoin="round"/>
+  <path d="M201 218h143M201 289h108" stroke="#fff" stroke-width="43" stroke-linecap="round"/>
+</svg>

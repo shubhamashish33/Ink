@@ -44,3 +44,5 @@ export class AuthPanel {
     this.auth.register(form, () => this.notes.loadActive());
   }
 }
+
+

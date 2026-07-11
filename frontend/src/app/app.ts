@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { LucideArchive, LucideBookOpen, LucideMoon, LucideNotebook, LucideSearch, LucideShieldCheck, LucideSparkles, LucideSun } from '@lucide/angular';
+import { LucideArchive, LucideMoon, LucideNotebook, LucideSearch, LucideShieldCheck, LucideSparkles, LucideSun } from '@lucide/angular';
 import { ApiService } from './core/api.service';
 import { AuthStore } from './core/auth.store';
 import { NotesStore } from './core/notes.store';
@@ -13,7 +13,6 @@ import { NotesShell } from './features/notes/notes-shell';
     AuthPanel,
     NotesShell,
     LucideArchive,
-    LucideBookOpen,
     LucideMoon,
     LucideNotebook,
     LucideSearch,
@@ -36,3 +35,5 @@ export class App {
     }
   }
 }
+
+

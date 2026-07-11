@@ -1,0 +1,24 @@
+{
+  "name": "Ink - Private AI Notes",
+  "short_name": "Ink",
+  "description": "A private notes and knowledge workspace for searchable, tagged, retrieval-ready ideas.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#15141a",
+  "background_color": "#f7f6f3",
+  "icons": [
+    {
+      "src": "/ink-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/ink-maskable-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
