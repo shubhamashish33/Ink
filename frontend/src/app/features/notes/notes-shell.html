@@ -159,7 +159,7 @@
       </div>
     </section>
 
-    <textarea name="note-content" placeholder="Write anything. Keep it searchable. Future RAG will thank you." [ngModel]="notes.draft().content" (ngModelChange)="notes.updateDraft('content', $event)"></textarea>
+    <textarea name="note-content" placeholder="Write anything. Keep it clear, useful, and searchable." [ngModel]="notes.draft().content" (ngModelChange)="notes.updateDraft('content', $event)"></textarea>
 
     <div class="editor-footer">
       <span>
@@ -176,6 +176,7 @@
     </div>
   </form>
 </section>
+
 
 
 

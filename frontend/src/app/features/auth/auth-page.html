@@ -1,0 +1,9 @@
+<section class="auth-layout">
+  <div class="auth-copy">
+    <span class="eyebrow">Secure account</span>
+    <h2>{{ mode === 'login' ? 'Welcome back to Ink.' : 'Create your Ink workspace.' }}</h2>
+    <p>{{ mode === 'login' ? 'Log in to continue writing, organizing, and searching your private notes.' : 'Start with a secure account, then create notes, add tags, pin important work, and archive the rest.' }}</p>
+  </div>
+
+  <app-auth-panel [initialMode]="mode" (authenticated)="onAuthenticated()" />
+</section>

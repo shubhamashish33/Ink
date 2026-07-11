@@ -93,6 +93,7 @@ button {
 
 .brand-lockup,
 .topbar-actions,
+.nav-link,
 .status-pill,
 .theme-toggle,
 .eyebrow,
@@ -104,6 +105,8 @@ button {
 .brand-lockup {
   min-width: 0;
   gap: 10px;
+  color: inherit;
+  text-decoration: none;
 }
 
 .brand-mark {
@@ -147,23 +150,37 @@ h1 {
   gap: 8px;
 }
 
+.nav-link,
 .status-pill,
 .theme-toggle {
   gap: 7px;
   min-height: 36px;
+  line-height: 1;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--panel);
   color: var(--muted);
-  padding: 0 11px;
+  padding: 0 12px;
   font-size: 13px;
   font-weight: 700;
 }
 
-.theme-toggle {
+.theme-toggle,
+.nav-link {
   color: var(--text);
 }
 
+.nav-link {
+  text-decoration: none;
+}
+
+.nav-link.strong {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: white;
+}
+
+.nav-link:hover,
 .theme-toggle:hover {
   border-color: var(--accent);
   background: var(--accent-soft);
@@ -290,6 +307,11 @@ h1 {
     grid-template-columns: 1fr;
   }
 }
+
+
+
+
+
 
 
 

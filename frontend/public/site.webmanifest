@@ -1,7 +1,7 @@
 {
-  "name": "Ink - Private AI Notes",
+  "name": "Ink - Private Notes",
   "short_name": "Ink",
-  "description": "A private notes and knowledge workspace for searchable, tagged, retrieval-ready ideas.",
+  "description": "A private notes workspace for searchable, tagged ideas.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -22,3 +22,4 @@
     }
   ]
 }
+
