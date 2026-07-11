@@ -1,5 +1,10 @@
 <main class="app-shell" [class.dark]="theme.dark()">
-  <header class="topbar">
+  <header class="topbar" [class.authenticated]="auth.isAuthenticated()">
+    @if (auth.isAuthenticated()) {
+      <button class="header-icon mobile-menu-button" type="button" title="Open notes" (click)="openNotesMenu()">
+        <svg lucideMenu class="icon"></svg>
+      </button>
+    }
     <a class="brand-lockup" routerLink="/" aria-label="Ink home">
       <span class="brand-mark" aria-hidden="true">
         <svg class="brand-icon" viewBox="0 0 64 64" aria-hidden="true">
@@ -15,21 +20,26 @@
 
     <div class="topbar-actions">
       @if (auth.isAuthenticated()) {
-        <a class="nav-link" routerLink="/notes"><svg lucideNotebook class="icon"></svg> Notes</a>
-        <span class="status-pill"><svg lucideShieldCheck class="icon"></svg> Protected</span>
-      } @else {
-        <!-- <a class="nav-link" routerLink="/login">Login</a> -->
-        <!-- <a class="nav-link strong" routerLink="/register">Register</a> -->
+        <div class="header-user">
+          <span class="header-avatar" aria-hidden="true">{{ auth.user()?.displayName?.charAt(0) || 'I' }}</span>
+          <span class="header-user-copy">
+            <strong>{{ auth.user()?.displayName }}</strong>
+            <small>{{ auth.user()?.email }}</small>
+          </span>
+        </div>
       }
-      <button class="theme-toggle" type="button" [title]="theme.dark() ? 'Switch to light mode' : 'Switch to dark mode'" (click)="theme.toggle()">
+      <button class="header-icon header-utility" type="button" [title]="theme.dark() ? 'Switch to light mode' : 'Switch to dark mode'" (click)="theme.toggle()">
         @if (theme.dark()) {
           <svg lucideSun class="icon"></svg>
-          <!-- <span>Light</span> -->
         } @else {
           <svg lucideMoon class="icon"></svg>
-          <span>Dark</span>
         }
       </button>
+      @if (auth.isAuthenticated()) {
+        <button class="header-icon header-utility" type="button" title="Sign out" (click)="logout()">
+          <svg lucideLogOut class="icon"></svg>
+        </button>
+      }
     </div>
   </header>
 

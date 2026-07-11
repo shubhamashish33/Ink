@@ -1,16 +1,15 @@
-<aside class="sidebar">
-  <section class="user-strip">
-    <div class="avatar" aria-hidden="true">{{ auth.user()?.displayName?.charAt(0) || 'I' }}</div>
-    <div class="user-meta">
-      <span>{{ auth.user()?.displayName }}</span>
-      <small>{{ auth.user()?.email }}</small>
-    </div>
-    <button class="icon-button" type="button" title="Sign out" (click)="logout()">
-      <svg lucideLogOut class="icon"></svg>
-    </button>
-  </section>
+@if (notes.mobilePanelOpen()) {
+  <button class="drawer-backdrop" type="button" aria-label="Close notes panel" (click)="closeMobilePanel()"></button>
+}
 
-  <button class="primary full" type="button" (click)="notes.clearSelection()">
+<aside class="sidebar" [class.open]="notes.mobilePanelOpen()">
+  <div class="drawer-head">
+    <strong>Notes</strong>
+    <button class="icon-button" type="button" title="Close notes" (click)="closeMobilePanel()">
+      <svg lucideX class="icon"></svg>
+    </button>
+  </div>
+  <button class="primary full" type="button" (click)="createNewNote()">
     <svg lucidePlus class="icon"></svg>
     New note
   </button>
@@ -21,12 +20,12 @@
   </label>
 
   <section class="nav" aria-label="Note views">
-    <button type="button" [class.active]="notes.activeView() === 'active'" (click)="notes.switchView('active')">
+    <button type="button" [class.active]="notes.activeView() === 'active'" (click)="switchView('active')">
       <svg lucideNotebook class="icon"></svg>
       <span>Notes</span>
       <strong>{{ notes.notes().length }}</strong>
     </button>
-    <button type="button" [class.active]="notes.activeView() === 'archived'" (click)="notes.switchView('archived')">
+    <button type="button" [class.active]="notes.activeView() === 'archived'" (click)="switchView('archived')">
       <svg lucideArchive class="icon"></svg>
       <span>Archive</span>
       <strong>{{ notes.archivedNotes().length }}</strong>
@@ -42,7 +41,7 @@
     </div>
 
     @for (note of notes.visibleNotes(); track note.id) {
-      <button type="button" class="note-row" [class.selected]="notes.selectedNoteId() === note.id" (click)="notes.select(note)" (contextmenu)="openContextMenu($event, note)">
+      <button type="button" class="note-row" [class.selected]="notes.selectedNoteId() === note.id" (click)="selectNote(note)" (contextmenu)="openContextMenu($event, note)">
         <span class="note-row-top">
           <span class="row-title">{{ note.title }}</span>
           @if (note.pinned) {
@@ -71,6 +70,31 @@
         <span>Create a note or adjust your search.</span>
       </div>
     }
+  </section>
+
+  <section class="drawer-account" aria-label="Account controls">
+    <div class="drawer-profile">
+      <div class="avatar" aria-hidden="true">{{ auth.user()?.displayName?.charAt(0) || 'I' }}</div>
+      <div class="user-meta">
+        <span>{{ auth.user()?.displayName }}</span>
+        <small>{{ auth.user()?.email }}</small>
+      </div>
+    </div>
+    <div class="drawer-account-actions">
+      <button type="button" (click)="theme.toggle()">
+        @if (theme.dark()) {
+          <svg lucideSun class="icon"></svg>
+          Light mode
+        } @else {
+          <svg lucideMoon class="icon"></svg>
+          Dark mode
+        }
+      </button>
+      <button type="button" (click)="logout()">
+        <svg lucideLogOut class="icon"></svg>
+        Sign out
+      </button>
+    </div>
   </section>
 
   @if (contextMenu(); as menu) {
@@ -148,14 +172,7 @@
         <span>Tags</span>
       </div>
       <div class="tag-control">
-        @if (notes.draft().tags.length) {
-          <div class="tag-strip">
-            @for (tag of notes.draft().tags; track tag) {
-              <span class="tag-chip">#{{ tag }}</span>
-            }
-          </div>
-        }
-        <input class="tag-input" name="note-tags" placeholder="backend, java, ideas" [ngModel]="notes.tagsInput()" (ngModelChange)="notes.updateTagsFromText($event)" />
+        <input class="tag-input" name="note-tags" aria-label="Tags separated by commas" placeholder="Add tags, separated by commas" [ngModel]="notes.tagsInput()" (ngModelChange)="notes.updateTagsFromText($event)" />
       </div>
     </section>
 
@@ -176,10 +193,4 @@
     </div>
   </form>
 </section>
-
-
-
-
-
-
 

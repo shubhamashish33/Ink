@@ -1,4 +1,5 @@
 import { computed, Injectable, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { ApiService } from './api.service';
 import { AuthTokenResponse, AuthUser, LoginRequest, RegisterRequest } from './models';
 
@@ -9,7 +10,10 @@ export class AuthStore {
   readonly user = signal<AuthUser | null>(null);
   readonly isAuthenticated = computed(() => !!this.token());
 
-  constructor(private readonly api: ApiService) {
+  constructor(
+    private readonly api: ApiService,
+    private readonly router: Router,
+  ) {
     window.addEventListener('ink-token-refreshed', (event) => {
       const response = (event as CustomEvent<AuthTokenResponse>).detail;
       this.token.set(response.accessToken);
@@ -17,7 +21,7 @@ export class AuthStore {
       this.user.set(response.user);
     });
 
-    window.addEventListener('ink-session-expired', () => this.clearSession());
+    window.addEventListener('ink-session-expired', () => this.endSession());
 
     if (this.token()) {
       this.loadCurrentUser();
@@ -52,9 +56,7 @@ export class AuthStore {
       this.api.request<void>('post', '/api/auth/logout', { refreshToken }).subscribe();
     }
 
-    localStorage.removeItem('ink.accessToken');
-    localStorage.removeItem('ink.refreshToken');
-    this.clearSession();
+    this.endSession();
   }
 
   loadCurrentUser() {
@@ -68,5 +70,12 @@ export class AuthStore {
     this.token.set(null);
     this.refreshToken.set(null);
     this.user.set(null);
+  }
+
+  private endSession() {
+    localStorage.removeItem('ink.accessToken');
+    localStorage.removeItem('ink.refreshToken');
+    this.clearSession();
+    void this.router.navigateByUrl('/login');
   }
 }

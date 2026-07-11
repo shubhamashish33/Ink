@@ -9,6 +9,7 @@ export class NotesStore {
   readonly notes = signal<Note[]>([]);
   readonly archivedNotes = signal<Note[]>([]);
   readonly selectedNoteId = signal<string | null>(null);
+  readonly mobilePanelOpen = signal(false);
   readonly draft = signal<NoteRequest>({ title: '', content: '', tags: [] });
   readonly tagsInput = signal('');
   readonly visibleNotes = computed(() => (this.activeView() === 'active' ? this.notes() : this.archivedNotes()));

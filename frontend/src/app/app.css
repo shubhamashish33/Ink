@@ -148,6 +148,72 @@ h1 {
 
 .topbar-actions {
   gap: 8px;
+  margin-left: auto;
+}
+
+.header-user {
+  display: inline-grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.header-avatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--panel-muted);
+  color: var(--text);
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.header-user-copy {
+  display: grid;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.header-user-copy strong,
+.header-user-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.header-user-copy strong {
+  font-size: 13px;
+}
+
+.header-user-copy small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.header-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--muted);
+  padding: 0;
+}
+
+.header-icon:hover {
+  border-color: var(--border-strong);
+  background: var(--panel-muted);
+  color: var(--text);
+}
+
+.mobile-menu-button {
+  display: none;
 }
 
 .nav-link,
@@ -277,25 +343,65 @@ h1 {
   .auth-layout {
     padding: 36px 0;
   }
+
+  .mobile-menu-button {
+    display: grid;
+    order: -1;
+  }
 }
 
 @media (max-width: 620px) {
   .topbar {
-    align-items: flex-start;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 9px;
+    min-height: 58px;
+    padding: 9px 12px;
   }
 
-  .topbar-actions,
-  .theme-toggle {
-    width: 100%;
+  .topbar.authenticated {
+    grid-template-columns: auto auto minmax(0, 1fr);
   }
 
-  .theme-toggle,
-  .status-pill {
-    justify-content: center;
+  .brand-mark {
+    width: 34px;
+    height: 34px;
+  }
+
+  .brand-icon {
+    width: 19px;
+    height: 19px;
+  }
+
+  .brand-lockup {
+    gap: 7px;
   }
 
   .topbar p {
+    display: none;
+  }
+
+  .topbar-actions {
+    min-width: 0;
+    gap: 5px;
+  }
+
+  .header-user-copy small {
+    display: none;
+  }
+
+  .header-user-copy {
+    display: none;
+  }
+
+  .header-avatar {
+    display: grid;
+    width: 34px;
+    height: 34px;
+  }
+
+  .header-utility {
     display: none;
   }
 
