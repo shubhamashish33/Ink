@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
-import { LucideLogOut, LucideMenu, LucideMoon, LucideSun } from '@lucide/angular';
+import { LucideLogOut, LucideMenu, LucideMoon, LucideSearch, LucideSun } from '@lucide/angular';
 import { ApiService } from './core/api.service';
 import { AuthStore } from './core/auth.store';
 import { NotesStore } from './core/notes.store';
@@ -8,11 +8,13 @@ import { ThemeStore } from './core/theme.store';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterLink, RouterOutlet, LucideLogOut, LucideMenu, LucideMoon, LucideSun],
+  imports: [RouterLink, RouterOutlet, LucideLogOut, LucideMenu, LucideMoon, LucideSearch, LucideSun],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
 export class App {
+  readonly commandShortcut = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘ K' : 'Ctrl K';
+
   constructor(
     readonly api: ApiService,
     readonly auth: AuthStore,
@@ -22,6 +24,11 @@ export class App {
     if (this.auth.isAuthenticated()) {
       this.notes.loadActive();
     }
+
+  }
+
+  openCommandPalette() {
+    this.notes.commandPaletteOpen.set(true);
   }
 
   openNotesMenu() {

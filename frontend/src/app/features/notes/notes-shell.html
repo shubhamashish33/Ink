@@ -14,10 +14,32 @@
     New note
   </button>
 
-  <label class="search-row">
+  <button class="search-row" type="button" (click)="openCommandPalette()">
     <svg lucideSearch class="search-icon"></svg>
-    <input type="search" placeholder="Search notes" [ngModel]="notes.searchQuery()" (ngModelChange)="updateSearch($event)" />
-  </label>
+    <span>Search notes</span>
+    <kbd>Ctrl K</kbd>
+  </button>
+
+  <section class="filter-row" aria-label="Note filters">
+    <label>
+      <span>Tag</span>
+      <select aria-label="Filter by tag" [ngModel]="notes.tagFilter()" (ngModelChange)="notes.setTagFilter($event)">
+        <option value="">All tags</option>
+        @for (tag of notes.availableTags(); track tag) {
+          <option [value]="tag">#{{ tag }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      <span>Date</span>
+      <select aria-label="Filter by date" [ngModel]="notes.dateFilter()" (ngModelChange)="setDateFilter($event)">
+        <option value="all">Any time</option>
+        <option value="today">Today</option>
+        <option value="week">Last 7 days</option>
+        <option value="month">Last 30 days</option>
+      </select>
+    </label>
+  </section>
 
   <section class="nav" aria-label="Note views">
     <button type="button" [class.active]="notes.activeView() === 'active'" (click)="switchView('active')">
@@ -35,7 +57,7 @@
   <section class="note-list" aria-label="Notes list">
     <div class="list-heading">
       <span>{{ notes.activeView() === 'active' ? 'Recent notes' : 'Archived notes' }}</span>
-      @if (notes.searchQuery()) {
+      @if (notes.searchQuery() || notes.tagFilter() || notes.dateFilter() !== 'all') {
         <small>Filtered</small>
       }
     </div>
@@ -43,12 +65,20 @@
     @for (note of notes.visibleNotes(); track note.id) {
       <button type="button" class="note-row" [class.selected]="notes.selectedNoteId() === note.id" (click)="selectNote(note)" (contextmenu)="openContextMenu($event, note)">
         <span class="note-row-top">
-          <span class="row-title">{{ note.title }}</span>
+          <span class="row-title">
+            @for (part of highlightParts(note.title); track $index) {
+              @if (part.match) { <mark>{{ part.text }}</mark> } @else { {{ part.text }} }
+            }
+          </span>
           @if (note.pinned) {
             <svg lucidePin class="pin-icon"></svg>
           }
         </span>
-        <span class="row-preview">{{ note.content }}</span>
+        <span class="row-preview">
+          @for (part of highlightParts(note.content); track $index) {
+            @if (part.match) { <mark>{{ part.text }}</mark> } @else { {{ part.text }} }
+          }
+        </span>
         @if (note.tags.length) {
           <span class="tag-strip compact">
             @for (tag of note.tags; track tag) {
@@ -164,7 +194,7 @@
       }
     </div>
 
-    <input class="title-input" name="note-title" placeholder="Untitled" [ngModel]="notes.draft().title" (ngModelChange)="notes.updateDraft('title', $event)" />
+    <input #titleInput class="title-input" name="note-title" placeholder="Untitled" [ngModel]="notes.draft().title" (ngModelChange)="updateDraft('title', $event)" />
 
     <section class="tag-editor" aria-label="Note tags">
       <div class="tag-label">
@@ -172,25 +202,64 @@
         <span>Tags</span>
       </div>
       <div class="tag-control">
-        <input class="tag-input" name="note-tags" aria-label="Tags separated by commas" placeholder="Add tags, separated by commas" [ngModel]="notes.tagsInput()" (ngModelChange)="notes.updateTagsFromText($event)" />
+        <input class="tag-input" name="note-tags" aria-label="Tags separated by commas" placeholder="Add tags, separated by commas" [ngModel]="notes.tagsInput()" (ngModelChange)="updateTags($event)" />
       </div>
     </section>
 
-    <textarea name="note-content" placeholder="Write anything. Keep it clear, useful, and searchable." [ngModel]="notes.draft().content" (ngModelChange)="notes.updateDraft('content', $event)"></textarea>
+    <div class="markdown-toolbar" aria-label="Markdown formatting">
+      <button type="button" title="Bold (Ctrl+B)" (click)="applyMarkdown(contentEditor, '**')"><strong>B</strong></button>
+      <button type="button" title="Italic (Ctrl+I)" (click)="applyMarkdown(contentEditor, '_')"><em>I</em></button>
+      <button type="button" title="Inline code" (click)="applyMarkdown(contentEditor, '`')"><span>&lt;/&gt;</span></button>
+      <button type="button" title="Heading" (click)="prefixMarkdown(contentEditor, '## ')">H2</button>
+      <button type="button" title="Bullet list" (click)="prefixMarkdown(contentEditor, '- ')">•</button>
+      <button type="button" title="Task list" (click)="prefixMarkdown(contentEditor, '- [ ] ')">☐</button>
+      <!-- <button type="button" class="palette-trigger" title="Command palette (Ctrl+K)" (click)="openCommandPalette()">Commands</button> -->
+    </div>
+
+    <textarea #contentEditor name="note-content" placeholder="Write anything. Markdown is supported." [ngModel]="notes.draft().content" (ngModelChange)="updateDraft('content', $event)"></textarea>
 
     <div class="editor-footer">
-      <span>
-        @if (notes.selectedNote()) {
-          Updated {{ notes.selectedNote()?.updatedAt | date: 'medium' }}
-        } @else {
-          New draft
+      <span class="save-status" [attr.data-state]="notes.saveState()">
+        @switch (notes.saveState()) {
+          @case ('dirty') { Unsaved changes }
+          @case ('saving') { Saving… }
+          @case ('saved') { Saved }
+          @case ('error') { Save failed }
+          @default {
+            @if (notes.selectedNote()) {
+              Updated {{ notes.selectedNote()?.updatedAt | date: 'medium' }}
+            } @else {
+              Start writing to create this note
+            }
+          }
         }
       </span>
-      <button class="primary" type="submit" [disabled]="api.loading()">
-        <svg lucideSave class="icon"></svg>
-        Save
-      </button>
+      <span class="autosave-label">Auto-save on</span>
     </div>
   </form>
 </section>
+
+@if (notes.commandPaletteOpen()) {
+  <div class="command-backdrop" (click)="closeCommandPalette()">
+    <section class="command-palette" role="dialog" aria-modal="true" aria-label="Command palette" (click)="$event.stopPropagation()" (focusout)="handlePaletteFocusOut($event)">
+      <label class="command-search">
+        <svg lucideSearch class="icon"></svg>
+        <input #commandInput type="text" inputmode="search" autocomplete="off" placeholder="Search notes or type a command" [ngModel]="commandQuery()" (ngModelChange)="updatePaletteQuery($event)" (keydown)="handlePaletteKeyboard($event)" />
+      </label>
+      <div #commandList class="command-list">
+        @for (item of paletteItems(); track item.id; let index = $index) {
+          <button type="button" [class.active]="paletteIndex() === index" (mouseenter)="paletteIndex.set(index)" (click)="activatePaletteItem(item)">
+            <span class="command-copy">
+              <strong>{{ item.label }}</strong>
+              @if (item.detail) { <small>{{ item.detail }}</small> }
+            </span>
+            @if (item.shortcut) { <kbd>{{ item.shortcut }}</kbd> }
+          </button>
+        } @empty {
+          <p>No matching notes</p>
+        }
+      </div>
+    </section>
+  </div>
+}
 
