@@ -38,6 +38,22 @@ jdbc:postgresql://localhost:5433/ink
 
 `localhost` means your Windows machine. Port `5433` is mapped to Postgres port `5432` inside Docker.
 
+## Frontend Setup
+
+The frontend is an Angular app in `frontend/`.
+
+Start it with:
+
+```powershell
+cd frontend
+npm install
+npm start
+```
+
+In local development, the Angular dev server forwards `/api` requests to the backend through `proxy.conf.json`.
+
+If the backend is running in Docker, the frontend can still run locally as long as the API is reachable at the proxied address.
+
 ## Schema Management
 
 Flyway owns database schema changes.
