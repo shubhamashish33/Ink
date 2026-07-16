@@ -21,6 +21,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 @Entity
 @Table(name = "notes")
@@ -54,6 +55,10 @@ public class Note {
 
     @Column(nullable = false)
     private boolean pinned = false;
+
+    @Version
+    @Column(nullable = false)
+    private Long version;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
@@ -118,6 +123,10 @@ public class Note {
 
     public boolean isPinned() {
         return pinned;
+    }
+
+    public Long getVersion() {
+        return version;
     }
 
     public Set<Tag> getTags() {

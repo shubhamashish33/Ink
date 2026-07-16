@@ -6,6 +6,7 @@ import { App } from './app';
 describe('App', () => {
   beforeEach(async () => {
     localStorage.clear();
+    sessionStorage.clear();
 
     await TestBed.configureTestingModule({
       imports: [App],

@@ -224,6 +224,7 @@
           @case ('dirty') { Unsaved changes }
           @case ('saving') { Saving… }
           @case ('saved') { Saved }
+          @case ('conflict') { A newer version is available. Your draft was not overwritten. }
           @case ('error') { Save failed }
           @default {
             @if (notes.selectedNote()) {
@@ -234,6 +235,9 @@
           }
         }
       </span>
+      @if (notes.saveState() === 'conflict') {
+        <button type="button" class="refresh-note-button" (click)="notes.reloadSelected()">Refresh note</button>
+      }
       <span class="autosave-label">Auto-save on</span>
     </div>
   </form>
@@ -262,4 +266,3 @@
     </section>
   </div>
 }
-

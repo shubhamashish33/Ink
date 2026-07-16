@@ -32,13 +32,19 @@ export class AuthStore {
 
   login(request: LoginRequest, afterLogin?: () => void) {
     this.api.request<AuthTokenResponse>('post', '/api/auth/login', request).subscribe({
-      next: (response) => {
+      next: async (response) => {
+        try {
+          await this.crypto.unlock(request.password);
+        } catch (error) {
+          this.api.setError(error);
+          return;
+        }
+
         localStorage.setItem('ink.accessToken', response.accessToken);
         localStorage.setItem('ink.refreshToken', response.refreshToken);
         this.token.set(response.accessToken);
         this.refreshToken.set(response.refreshToken);
         this.user.set(response.user);
-        this.crypto.unlock(request.password);
         this.api.clearError();
         afterLogin?.();
       },
@@ -79,7 +85,7 @@ export class AuthStore {
     localStorage.removeItem('ink.accessToken');
     localStorage.removeItem('ink.refreshToken');
     this.clearSession();
-    this.crypto.lock();
+    void this.crypto.lock();
     void this.router.navigateByUrl('/login');
   }
 }

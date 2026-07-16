@@ -25,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.shubham.ink.common.exception.ResourceNotFoundException;
+import com.shubham.ink.common.exception.NoteVersionConflictException;
 import com.shubham.ink.note.dto.CreateNoteRequest;
 import com.shubham.ink.note.dto.UpdateNoteRequest;
 import com.shubham.ink.user.User;
@@ -101,12 +102,30 @@ class NoteServiceTest {
         assertThat(noteService.findById(user.getEmail(), noteId).title()).isEqualTo("Old");
 
         var updated = noteService.update(user.getEmail(), noteId,
-                new UpdateNoteRequest(" New title ", " New content ", Set.of(" Backend ")));
+                new UpdateNoteRequest(" New title ", " New content ", Set.of(" Backend "), 0L));
 
         assertThat(updated.title()).isEqualTo("New title");
         assertThat(updated.content()).isEqualTo("New content");
         assertThat(updated.tags()).containsExactly("backend");
         verify(noteRepository, never()).save(note);
+    }
+
+    @Test
+    void updateRejectsAnOutdatedNoteVersion() {
+        UUID noteId = UUID.randomUUID();
+        Note note = note("Current title", "Current content");
+        ReflectionTestUtils.setField(note, "version", 3L);
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(noteRepository.findByIdAndUser_Id(noteId, user.getId())).thenReturn(Optional.of(note));
+
+        assertThatThrownBy(() -> noteService.update(user.getEmail(), noteId,
+                new UpdateNoteRequest("Stale title", "Stale content", Set.of(), 2L)))
+                .isInstanceOf(NoteVersionConflictException.class)
+                .hasMessageContaining("newer version");
+
+        assertThat(note.getTitle()).isEqualTo("Current title");
+        assertThat(note.getContent()).isEqualTo("Current content");
+        verify(noteRepository, never()).save(any());
     }
 
     @Test
@@ -196,6 +215,7 @@ class NoteServiceTest {
     private Note note(String title, String content) {
         Note note = new Note(user, title, content);
         ReflectionTestUtils.setField(note, "id", UUID.randomUUID());
+        ReflectionTestUtils.setField(note, "version", 0L);
         return note;
     }
 }

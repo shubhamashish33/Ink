@@ -1,10 +1,11 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { computed, Injectable, signal } from '@angular/core';
 import { ApiService } from './api.service';
 import { Note, NoteRequest, PageResponse } from './models';
 import { CryptoService } from './crypto.service';
 
 export type NoteDateFilter = 'all' | 'today' | 'week' | 'month';
-export type NoteSaveState = 'idle' | 'dirty' | 'saving' | 'saved' | 'error';
+export type NoteSaveState = 'idle' | 'dirty' | 'saving' | 'saved' | 'conflict' | 'error';
 
 @Injectable({ providedIn: 'root' })
 export class NotesStore {
@@ -51,14 +52,22 @@ export class NotesStore {
 
   loadActive() {
     this.api.request<PageResponse<import('./models').EncryptedNoteResponse>>('get', '/api/notes?size=1000').subscribe({
-      next: async (page) => this.notes.set((await this.decryptAll(page.content)).filter((note) => this.matchesSearch(note))),
+      next: (page) => {
+        void this.decryptAll(page.content)
+          .then((notes) => this.notes.set(notes.filter((note) => this.matchesSearch(note))))
+          .catch((error) => this.api.setError(error));
+      },
       error: (error) => this.api.setError(error),
     });
   }
 
   loadArchived() {
     this.api.request<PageResponse<import('./models').EncryptedNoteResponse>>('get', '/api/notes/archived?size=1000').subscribe({
-      next: async (page) => this.archivedNotes.set(await this.decryptAll(page.content)),
+      next: (page) => {
+        void this.decryptAll(page.content)
+          .then((notes) => this.archivedNotes.set(notes))
+          .catch((error) => this.api.setError(error));
+      },
       error: (error) => this.api.setError(error),
     });
   }
@@ -168,7 +177,9 @@ export class NotesStore {
     this.saveState.set('saving');
     const targetId = selected?.id ?? null;
     this.crypto.encrypt(body).then((encryptedPayload) => {
-      const request = { encryptedPayload };
+      const request = selected
+        ? { encryptedPayload, version: selected.version }
+        : { encryptedPayload };
       if (selected) {
         this.api.request<import('./models').EncryptedNoteResponse>('put', `/api/notes/${selected.id}`, request).subscribe({
           next: async (response) => this.completeSave((await this.crypto.decrypt(response))!, body, targetId),
@@ -255,6 +266,19 @@ export class NotesStore {
     });
   }
 
+  reloadSelected() {
+    const selected = this.selectedNote();
+    if (!selected) return;
+
+    this.api.request<import('./models').EncryptedNoteResponse>('get', `/api/notes/${selected.id}`).subscribe({
+      next: async (response) => {
+        const latest = await this.crypto.decrypt(response);
+        if (latest) this.replace(latest);
+      },
+      error: (error) => this.api.setError(error),
+    });
+  }
+
   private moveOut(note: Note, url: string, collection: 'notes' | 'archivedNotes') {
     this.api.request<import('./models').EncryptedNoteResponse>('patch', url).subscribe({
       next: (updated) => {
@@ -320,7 +344,10 @@ export class NotesStore {
     this.saveInProgress = false;
     this.savePending = false;
     this.afterSaveCallbacks.length = 0;
-    this.saveState.set('error');
+    const versionConflict = error instanceof HttpErrorResponse
+      && error.status === 409
+      && error.error?.code === 'NOTE_VERSION_CONFLICT';
+    this.saveState.set(versionConflict ? 'conflict' : 'error');
     this.api.setError(error);
   }
 

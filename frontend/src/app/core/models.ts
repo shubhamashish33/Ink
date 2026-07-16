@@ -28,6 +28,7 @@ export interface LoginRequest {
 
 export interface Note {
   id: string;
+  version: number;
   title: string;
   content: string;
   tags: string[];
@@ -40,6 +41,7 @@ export interface Note {
 export interface EncryptedNoteResponse {
   id: string;
   encryptedPayload: string | null;
+  version: number;
   archived: boolean;
   pinned: boolean;
   createdAt: string;

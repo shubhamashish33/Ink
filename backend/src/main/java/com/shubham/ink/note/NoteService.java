@@ -1,6 +1,7 @@
 package com.shubham.ink.note;
 
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.shubham.ink.common.exception.ResourceNotFoundException;
+import com.shubham.ink.common.exception.NoteVersionConflictException;
 import com.shubham.ink.note.dto.CreateNoteRequest;
 import com.shubham.ink.note.dto.NoteResponse;
 import com.shubham.ink.note.dto.UpdateNoteRequest;
@@ -65,6 +67,10 @@ public class NoteService {
         User user = getUserByEmail(email);
 
         Note note = noteRepository.findByIdAndUser_Id(noteId, user.getId()).orElseThrow(() -> new ResourceNotFoundException("Note not found"));
+
+        if (!Objects.equals(request.version(), note.getVersion())) {
+            throw new NoteVersionConflictException(noteId, note.getVersion());
+        }
 
         if (request.encryptedPayload() != null) {
             note.update(request.encryptedPayload());
@@ -163,6 +169,7 @@ public class NoteService {
             note.getContent(),
             note.getTags().stream().map(Tag::getName).collect(Collectors.toCollection(LinkedHashSet::new)),
             note.getEncryptedPayload(),
+            note.getVersion(),
             note.isArchived(),
             note.isPinned(),
             note.getCreatedAt(),

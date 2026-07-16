@@ -664,8 +664,19 @@ textarea {
   color: #2d7d46;
 }
 
+.save-status[data-state='conflict'] {
+  color: var(--warning);
+}
+
 .save-status[data-state='error'] {
   color: var(--danger);
+}
+
+.refresh-note-button {
+  border: 1px solid var(--warning-border);
+  background: var(--warning-bg);
+  color: var(--warning);
+  font-weight: 700;
 }
 
 .autosave-label {

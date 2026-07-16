@@ -3,9 +3,11 @@ package com.shubham.ink.common.exception;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -14,6 +16,45 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(NoteVersionConflictException.class)
+    public ResponseEntity<ConflictErrorResponse> handleNoteVersionConflict(
+        NoteVersionConflictException exception,
+        HttpServletRequest request
+    ) {
+        ConflictErrorResponse response = new ConflictErrorResponse(
+            Instant.now(),
+            HttpStatus.CONFLICT.value(),
+            HttpStatus.CONFLICT.getReasonPhrase(),
+            "NOTE_VERSION_CONFLICT",
+            exception.getMessage(),
+            request.getRequestURI(),
+            exception.getNoteId(),
+            exception.getCurrentVersion()
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ConflictErrorResponse> handleOptimisticLockingFailure(
+        ObjectOptimisticLockingFailureException exception,
+        HttpServletRequest request
+    ) {
+        UUID noteId = exception.getIdentifier() instanceof UUID id ? id : null;
+        ConflictErrorResponse response = new ConflictErrorResponse(
+            Instant.now(),
+            HttpStatus.CONFLICT.value(),
+            HttpStatus.CONFLICT.getReasonPhrase(),
+            "NOTE_VERSION_CONFLICT",
+            "A newer version of this note is available. Refresh before saving your changes.",
+            request.getRequestURI(),
+            noteId,
+            null
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
     
     @ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<ApiErrorResponse> handleDuplicateResource(
