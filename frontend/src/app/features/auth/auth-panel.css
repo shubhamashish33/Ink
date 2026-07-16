@@ -154,3 +154,34 @@ input::placeholder {
 
 
 
+.password-recovery-note,
+.recovery-confirmation {
+  margin: 0;
+  border: 1px solid var(--warning-border);
+  border-radius: 8px;
+  background: var(--warning-bg);
+  color: var(--warning);
+  padding: 10px 11px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.password-recovery-note strong {
+  display: block;
+  margin-bottom: 2px;
+}
+
+.recovery-confirmation {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 9px;
+  cursor: pointer;
+}
+
+.recovery-confirmation input {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  accent-color: var(--accent);
+}

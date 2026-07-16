@@ -20,6 +20,7 @@ export class AuthPanel {
   readonly mode = signal<'login' | 'register'>('login');
   readonly loginForm = signal({ email: '', password: '' });
   readonly registerForm = signal({ email: '', password: '', displayName: '' });
+  readonly recoveryWarningAccepted = signal(false);
 
   constructor(
     readonly api: ApiService,
@@ -29,6 +30,7 @@ export class AuthPanel {
   setMode(mode: 'login' | 'register') {
     this.mode.set(mode);
     this.api.clearError();
+    if (mode === 'login') this.recoveryWarningAccepted.set(false);
   }
 
   updateLogin(field: 'email' | 'password', value: string) {

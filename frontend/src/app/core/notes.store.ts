@@ -209,29 +209,6 @@ export class NotesStore {
     return value.includes(query.toLowerCase());
   }
 
-  /*
-    The server never receives title/content/tags. The code below is retained
-    only in the branch diff context to make the save flow easy to review.
-  */
-  private legacySaveRemoved() {
-    /*
-      if (selected) {
-        this.api.request<Note>('put', `/api/notes/${selected.id}`, body).subscribe({
-        next: (note) => this.completeSave(note, body, targetId),
-        error: (error) => this.failSave(error),
-      });
-      return;
-    }
-
-    this.api.request<Note>('post', '/api/notes', body).subscribe({
-      next: (note) => {
-        this.notes.update((notes) => [note, ...notes]);
-        this.completeSave(note, body, targetId);
-      },
-      error: (error) => this.failSave(error),
-    });
-    */
-  }
 
   archive(note: Note) {
     this.moveOut(note, `/api/notes/${note.id}/archive`, 'notes');

@@ -36,7 +36,15 @@ interface HighlightPart {
   match: boolean;
 }
 
-type CommandId = 'new' | 'save' | 'theme';
+interface NoteTemplate {
+  name: string;
+  description: string;
+  title: string;
+  content: string;
+  tags: string[];
+}
+
+type CommandId = 'new' | 'save' | 'theme' | 'templates' | 'shortcuts' | 'export-json';
 
 interface PaletteItem {
   id: string;
@@ -77,6 +85,31 @@ export class NotesShell {
   @ViewChild('commandList') private commandList?: ElementRef<HTMLElement>;
 
   readonly contextMenu = signal<NoteContextMenu | null>(null);
+  readonly templatesOpen = signal(false);
+  readonly shortcutsOpen = signal(false);
+  readonly templates: NoteTemplate[] = [
+    {
+      name: 'Daily note',
+      description: 'Priorities, observations, and one small win.',
+      title: 'Daily note',
+      content: '## Today\n\nWhat matters most?\n\n## Notes\n\n\n## One small win\n\n',
+      tags: ['daily'],
+    },
+    {
+      name: 'Meeting notes',
+      description: 'Keep decisions and next steps together.',
+      title: 'Meeting notes',
+      content: '## Purpose\n\n\n## Discussion\n\n\n## Decisions\n\n- \n\n## Next steps\n\n- [ ] ',
+      tags: ['meeting'],
+    },
+    {
+      name: 'Project brief',
+      description: 'Turn an early idea into a useful plan.',
+      title: 'Project brief',
+      content: '## The idea\n\n\n## Why it matters\n\n\n## What success looks like\n\n\n## First steps\n\n- [ ] ',
+      tags: ['project'],
+    },
+  ];
   readonly commandQuery = signal('');
   readonly paletteIndex = signal(0);
   readonly paletteItems = computed<PaletteItem[]>(() => {
@@ -85,6 +118,9 @@ export class NotesShell {
       { id: 'new', label: 'Create new note', shortcut: 'Ctrl N' },
       { id: 'save', label: 'Save now', shortcut: 'Ctrl S' },
       { id: 'theme', label: 'Toggle theme', shortcut: '' },
+      { id: 'templates', label: 'Create from template', shortcut: '' },
+      { id: 'shortcuts', label: 'Keyboard shortcuts', shortcut: '?' },
+      { id: 'export-json', label: 'Export current note as JSON', shortcut: '' },
     ];
     const commandItems: PaletteItem[] = commands
       .filter((command) => !query || command.label.toLowerCase().includes(query))
@@ -175,6 +211,8 @@ export class NotesShell {
       event.stopPropagation();
       this.closeContextMenu();
       this.closeMobilePanel();
+      this.templatesOpen.set(false);
+      this.shortcutsOpen.set(false);
       return;
     }
 
@@ -193,6 +231,12 @@ export class NotesShell {
     if (commandKey && event.key.toLowerCase() === 's') {
       event.preventDefault();
       this.notes.save();
+      return;
+    }
+
+    if (!editing && event.key === '?') {
+      event.preventDefault();
+      this.shortcutsOpen.set(true);
       return;
     }
 
@@ -223,6 +267,35 @@ export class NotesShell {
       this.closeMobilePanel();
       this.notes.commandPaletteOpen.set(false);
       setTimeout(() => this.titleInput?.nativeElement.focus());
+    });
+  }
+
+  openTemplates() {
+    this.templatesOpen.set(true);
+    this.closeMobilePanel();
+  }
+
+  useTemplate(template: NoteTemplate) {
+    this.afterDraftSaved(() => {
+      this.notes.clearSelection();
+      this.notes.updateDraft('title', template.title);
+      this.notes.updateDraft('content', template.content);
+      this.notes.updateTagsFromText(template.tags.join(', '));
+      this.templatesOpen.set(false);
+      setTimeout(() => {
+        this.notes.save();
+        this.titleInput?.nativeElement.focus();
+      });
+    });
+  }
+
+  loadDemoNote() {
+    this.useTemplate({
+      name: 'Demo note',
+      description: 'A quick tour of Ink.',
+      title: 'Welcome to Ink',
+      content: 'Ink encrypts note content in your browser before it is stored.\n\nTry **Markdown**, add a few tags, press Ctrl/⌘ K to search, or export this note when you are ready.\n\n- [ ] Create your first note\n- [ ] Try a template\n- [ ] Export a backup',
+      tags: ['welcome', 'demo'],
     });
   }
 
@@ -341,10 +414,33 @@ export class NotesShell {
       this.createNewNote();
     } else if (command === 'save') {
       this.notes.save();
-    } else {
+    } else if (command === 'theme') {
       this.theme.toggle();
+    } else if (command === 'templates') {
+      this.openTemplates();
+    } else if (command === 'shortcuts') {
+      this.shortcutsOpen.set(true);
+    } else {
+      this.exportSelectedJson();
     }
     this.notes.commandPaletteOpen.set(false);
+  }
+
+  exportSelectedMarkdown() {
+    const note = this.notes.selectedNote();
+    if (!note) return;
+    const tags = note.tags.length ? `\n\nTags: ${note.tags.map((tag) => `#${tag}`).join(' ')}` : '';
+    this.download(
+      `${this.fileName(note.title)}.md`,
+      `# ${note.title}\n\n${note.content}${tags}\n`,
+      'text/markdown',
+    );
+  }
+
+  exportSelectedJson() {
+    const note = this.notes.selectedNote();
+    if (!note) return;
+    this.download(`${this.fileName(note.title)}.json`, JSON.stringify(note, null, 2), 'application/json');
   }
 
   applyMarkdown(textarea: HTMLTextAreaElement, before: string, after = before) {
@@ -448,5 +544,18 @@ export class NotesShell {
 
   trackNote(_: number, note: Note) {
     return note.id;
+  }
+
+  private fileName(value: string) {
+    return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'untitled';
+  }
+
+  private download(name: string, content: string, type: string) {
+    const url = URL.createObjectURL(new Blob([content], { type }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = name;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 }

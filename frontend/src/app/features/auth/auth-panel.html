@@ -32,6 +32,9 @@
           <input name="login-password" type="password" autocomplete="current-password" placeholder="Your password" [ngModel]="loginForm().password" (ngModelChange)="updateLogin('password', $event)" />
         </span>
       </label>
+      <p class="password-recovery-note">
+        <strong>Forgot your password?</strong> Ink cannot recover or decrypt your notes without it. Your encrypted notes will be permanently inaccessible.
+      </p>
       <button class="primary" type="submit" [disabled]="api.loading() || api.rateLimited()">
         <svg lucideShieldCheck class="icon"></svg>
         Login
@@ -60,7 +63,11 @@
           <input name="register-password" type="password" autocomplete="new-password" placeholder="At least 8 characters" [ngModel]="registerForm().password" (ngModelChange)="updateRegister('password', $event)" />
         </span>
       </label>
-      <button class="primary" type="submit" [disabled]="api.loading() || api.rateLimited()">
+      <label class="recovery-confirmation">
+        <input type="checkbox" name="recovery-warning" [ngModel]="recoveryWarningAccepted()" (ngModelChange)="recoveryWarningAccepted.set($event)" />
+        <span><strong>There is no password recovery for encrypted notes.</strong> If I forget this password, my existing notes will be lost.</span>
+      </label>
+      <button class="primary" type="submit" [disabled]="api.loading() || api.rateLimited() || !recoveryWarningAccepted()">
         <svg lucideShieldCheck class="icon"></svg>
         Create account
       </button>

@@ -9,10 +9,15 @@
       <svg lucideX class="icon"></svg>
     </button>
   </div>
-  <button class="primary full" type="button" (click)="createNewNote()">
-    <svg lucidePlus class="icon"></svg>
-    New note
-  </button>
+  <div class="create-actions">
+    <button class="primary full" type="button" (click)="createNewNote()">
+      <svg lucidePlus class="icon"></svg>
+      New note
+    </button>
+    <button class="ghost full" type="button" (click)="openTemplates()">
+      Templates
+    </button>
+  </div>
 
   <button class="search-row" type="button" (click)="openCommandPalette()">
     <svg lucideSearch class="search-icon"></svg>
@@ -96,8 +101,18 @@
     } @empty {
       <div class="empty">
         <svg lucideFileText class="empty-icon"></svg>
-        <strong>No notes here</strong>
-        <span>Create a note or adjust your search.</span>
+        @if (notes.searchQuery() || notes.tagFilter() || notes.dateFilter() !== 'all') {
+          <strong>No matching notes</strong>
+          <span>Try clearing a filter or searching for something else.</span>
+          <button class="empty-link" type="button" (click)="notes.clearFilters()">Clear filters</button>
+        } @else {
+          <strong>Your first page is waiting</strong>
+          <span>Start blank, use a template, or explore a ready-made demo note.</span>
+          <div class="empty-actions">
+            <button type="button" (click)="openTemplates()">Use template</button>
+            <button type="button" (click)="loadDemoNote()">Demo note</button>
+          </div>
+        }
       </div>
     }
   </section>
@@ -164,6 +179,12 @@
 
       @if (notes.selectedNote()) {
         <div class="actions">
+          <button type="button" class="ghost export-action" (click)="exportSelectedMarkdown()" title="Export this note as Markdown">
+            Markdown
+          </button>
+          <button type="button" class="ghost export-action" (click)="exportSelectedJson()" title="Export this note as JSON">
+            JSON
+          </button>
           @if (notes.selectedNote()?.pinned) {
             <button type="button" class="ghost" (click)="notes.unpin(notes.selectedNote()!)" title="Unpin note">
               <svg lucidePin class="icon"></svg>
@@ -213,7 +234,7 @@
       <button type="button" title="Heading" (click)="prefixMarkdown(contentEditor, '## ')">H2</button>
       <button type="button" title="Bullet list" (click)="prefixMarkdown(contentEditor, '- ')">•</button>
       <button type="button" title="Task list" (click)="prefixMarkdown(contentEditor, '- [ ] ')">☐</button>
-      <!-- <button type="button" class="palette-trigger" title="Command palette (Ctrl+K)" (click)="openCommandPalette()">Commands</button> -->
+      <button type="button" class="palette-trigger" title="Keyboard shortcuts" (click)="shortcutsOpen.set(true)">Shortcuts</button>
     </div>
 
     <textarea #contentEditor name="note-content" placeholder="Write anything. Markdown is supported." [ngModel]="notes.draft().content" (ngModelChange)="updateDraft('content', $event)"></textarea>
@@ -263,6 +284,45 @@
           <p>No matching notes</p>
         }
       </div>
+    </section>
+  </div>
+}
+
+@if (templatesOpen()) {
+  <div class="launch-modal-backdrop" (click)="templatesOpen.set(false)">
+    <section class="launch-modal" role="dialog" aria-modal="true" aria-labelledby="templates-title" (click)="$event.stopPropagation()">
+      <button class="modal-close" type="button" aria-label="Close templates" (click)="templatesOpen.set(false)"><svg lucideX class="icon"></svg></button>
+      <span class="modal-kicker">START WITH A LITTLE STRUCTURE</span>
+      <h2 id="templates-title">Note templates</h2>
+      <p>Choose a starting point and make it yours.</p>
+      <div class="template-grid">
+        @for (template of templates; track template.name) {
+          <button type="button" (click)="useTemplate(template)">
+            <strong>{{ template.name }}</strong>
+            <span>{{ template.description }}</span>
+          </button>
+        }
+      </div>
+    </section>
+  </div>
+}
+
+@if (shortcutsOpen()) {
+  <div class="launch-modal-backdrop" (click)="shortcutsOpen.set(false)">
+    <section class="launch-modal shortcuts-modal" role="dialog" aria-modal="true" aria-labelledby="shortcuts-title" (click)="$event.stopPropagation()">
+      <button class="modal-close" type="button" aria-label="Close keyboard shortcuts" (click)="shortcutsOpen.set(false)"><svg lucideX class="icon"></svg></button>
+      <span class="modal-kicker">WORK AT THE SPEED OF THOUGHT</span>
+      <h2 id="shortcuts-title">Keyboard shortcuts</h2>
+      <dl>
+        <div><dt>New note</dt><dd><kbd>Ctrl / ⌘</kbd><span>+</span><kbd>N</kbd></dd></div>
+        <div><dt>Search and commands</dt><dd><kbd>Ctrl / ⌘</kbd><span>+</span><kbd>K</kbd></dd></div>
+        <div><dt>Save now</dt><dd><kbd>Ctrl / ⌘</kbd><span>+</span><kbd>S</kbd></dd></div>
+        <div><dt>Bold</dt><dd><kbd>Ctrl / ⌘</kbd><span>+</span><kbd>B</kbd></dd></div>
+        <div><dt>Italic</dt><dd><kbd>Ctrl / ⌘</kbd><span>+</span><kbd>I</kbd></dd></div>
+        <div><dt>Open this guide</dt><dd><kbd>?</kbd></dd></div>
+        <div><dt>Close a dialog</dt><dd><kbd>Esc</kbd></dd></div>
+      </dl>
+      <p>Ink also saves automatically while you write.</p>
     </section>
   </div>
 }
