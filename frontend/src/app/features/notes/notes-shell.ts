@@ -109,7 +109,7 @@ export class NotesShell {
     return [...commandItems, ...noteItems, ...createItem];
   });
   private readonly paletteSearch$ = new Subject<string>();
-  private readonly autosave$ = new Subject<void>();
+  private readonly autosave$ = new Subject<string>();
   private readonly destroyRef = inject(DestroyRef);
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
   private readonly capturePaletteEscape = (event: KeyboardEvent) => {
@@ -137,7 +137,7 @@ export class NotesShell {
       .subscribe((value) => this.notes.searchPalette(value));
 
     this.autosave$
-      .pipe(debounceTime(900), takeUntilDestroyed())
+      .pipe(debounceTime(2500), distinctUntilChanged(), takeUntilDestroyed())
       .subscribe(() => this.notes.save(true));
 
     effect(() => {
@@ -239,12 +239,12 @@ export class NotesShell {
 
   updateDraft(field: 'title' | 'content', value: string) {
     this.notes.updateDraft(field, value);
-    this.autosave$.next();
+    this.scheduleAutosave();
   }
 
   updateTags(value: string) {
     this.notes.updateTagsFromText(value);
-    this.autosave$.next();
+    this.scheduleAutosave();
   }
 
   setDateFilter(value: string) {
@@ -394,6 +394,16 @@ export class NotesShell {
       return;
     }
     action();
+  }
+
+  private scheduleAutosave() {
+    const draft = this.notes.draft();
+    const fingerprint = JSON.stringify({
+      title: draft.title.trim(),
+      content: draft.content.trim(),
+      tags: [...draft.tags].map((tag) => tag.trim().toLowerCase()).filter(Boolean).sort(),
+    });
+    this.autosave$.next(fingerprint);
   }
 
   private initializePalette() {

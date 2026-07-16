@@ -45,6 +45,7 @@ export class NotesStore {
   private savePending = false;
   private readonly afterSaveCallbacks: Array<() => void> = [];
   private paletteSearchSequence = 0;
+  private persistedDraft: NoteRequest | null = null;
 
   constructor(private readonly api: ApiService, private readonly crypto: CryptoService) {}
 
@@ -90,7 +91,9 @@ export class NotesStore {
   select(note: Note) {
     this.selectedNoteId.set(note.id);
     const tags = note.tags ?? [];
-    this.draft.set({ title: note.title, content: note.content, tags });
+    const draft = { title: note.title, content: note.content, tags };
+    this.draft.set(draft);
+    this.persistedDraft = this.normalizedDraft(draft);
     this.tagsInput.set(tags.join(', '));
     this.saveState.set('idle');
   }
@@ -99,18 +102,19 @@ export class NotesStore {
     this.selectedNoteId.set(null);
     this.draft.set({ title: '', content: '', tags: [] });
     this.tagsInput.set('');
+    this.persistedDraft = null;
     this.saveState.set('idle');
   }
 
   updateDraft(field: 'title' | 'content', value: string) {
     this.draft.update((draft) => ({ ...draft, [field]: value }));
-    this.saveState.set('dirty');
+    this.refreshDirtyState();
   }
 
   updateTagsFromText(value: string) {
     this.tagsInput.set(value);
     this.draft.update((draft) => ({ ...draft, tags: this.normalizeTags(value) }));
-    this.saveState.set('dirty');
+    this.refreshDirtyState();
   }
 
   setTagFilter(tag: string) {
@@ -329,6 +333,21 @@ export class NotesStore {
     return left.title.trim() === right.title
       && left.content.trim() === right.content
       && this.normalizeTags(left.tags).join('|') === this.normalizeTags(right.tags).join('|');
+  }
+
+  private refreshDirtyState() {
+    const draft = this.normalizedDraft(this.draft());
+    const unchanged = this.persistedDraft !== null && this.sameDraft(draft, this.persistedDraft);
+    const emptyNewDraft = this.persistedDraft === null && !draft.title && !draft.content && draft.tags.length === 0;
+    this.saveState.set(unchanged || emptyNewDraft ? 'idle' : 'dirty');
+  }
+
+  private normalizedDraft(draft: NoteRequest): NoteRequest {
+    return {
+      title: draft.title.trim(),
+      content: draft.content.trim(),
+      tags: this.normalizeTags(draft.tags),
+    };
   }
 
   private dateCutoff(filter: NoteDateFilter) {
