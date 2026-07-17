@@ -11,8 +11,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.shubham.ink.common.exception.ResourceNotFoundException;
 import com.shubham.ink.common.exception.NoteVersionConflictException;
+import com.shubham.ink.common.exception.ResourceNotFoundException;
 import com.shubham.ink.note.dto.CreateNoteRequest;
 import com.shubham.ink.note.dto.NoteResponse;
 import com.shubham.ink.note.dto.UpdateNoteRequest;

@@ -11,6 +11,23 @@ interface EncryptedPayload {
   ciphertext: string;
 }
 
+interface PasswordWrappedVaultKey {
+  version: 1;
+  algorithm: 'AES-GCM';
+  kdf: 'PBKDF2-SHA-256';
+  iterations: number;
+  salt: string;
+  iv: string;
+  ciphertext: string;
+}
+
+interface RecoveryWrappedVaultKey {
+  version: 1;
+  algorithm: 'AES-GCM';
+  iv: string;
+  ciphertext: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CryptoService {
   readonly unlocked = signal(false);
@@ -20,6 +37,7 @@ export class CryptoService {
   private readonly databaseName = 'ink-crypto';
   private readonly keyStoreName = 'session-keys';
   private readonly sessionIdStorageKey = 'ink.cryptoSessionId';
+  private vaultKey: CryptoKey | null = null;
 
   async unlock(password: string) {
     const keyMaterial = await crypto.subtle.importKey(
@@ -49,6 +67,7 @@ export class CryptoService {
     this.keyMaterial = null;
     this.restorePromise = null;
     this.unlocked.set(false);
+    this.vaultKey = null;
 
     if (sessionId) await this.deleteSessionKey(sessionId);
   }
@@ -172,6 +191,80 @@ export class CryptoService {
         reject(transaction.error);
       };
     });
+  }
+
+  async createVault(password: string) {
+    const vaultBytes = crypto.getRandomValues(new Uint8Array(32));
+    const recoveryBytes = crypto.getRandomValues(new Uint8Array(32));
+
+    const passwordWrappedKey = await this.wrapVaultWithPassword(vaultBytes, password);
+
+    const recoveryWrappedKey = await this.wrapVaultWithRecoveryKey(vaultBytes, recoveryBytes);
+
+    this.vaultKey = await crypto.subtle.importKey(
+      'raw',
+      vaultBytes,
+      'AES-GCM',
+      false,
+      ['encrypt', 'decrypt'],
+    );
+
+    return {
+      passwordWrappedKey,
+      recoveryWrappedKey,
+      recoveryKey: this.encode(recoveryBytes),
+    };
+  }
+
+  private async wrapVaultWithPassword(vaultBytes: Uint8Array, password: string) {
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const passwordMaterial = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(password),
+      'PBKDF2',
+      false,
+      ['deriveKey'],
+    );
+    const wrappingKey = await this.deriveKey(passwordMaterial, salt);
+    const ciphertext = await crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv },
+      wrappingKey,
+      vaultBytes as unknown as BufferSource,
+    );
+
+    return JSON.stringify({
+      version: 1,
+      algorithm: 'AES-GCM',
+      kdf: 'PBKDF2-SHA-256',
+      iterations: this.iterations,
+      salt: this.encode(salt),
+      iv: this.encode(iv),
+      ciphertext: this.encode(new Uint8Array(ciphertext)),
+    } satisfies PasswordWrappedVaultKey);
+  }
+
+  private async wrapVaultWithRecoveryKey(vaultBytes: Uint8Array, recoveryBytes: Uint8Array) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const recoveryKey = await crypto.subtle.importKey(
+      'raw',
+      recoveryBytes as unknown as BufferSource,
+      'AES-GCM',
+      false,
+      ['encrypt'],
+    );
+    const ciphertext = await crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv },
+      recoveryKey,
+      vaultBytes as unknown as BufferSource,
+    );
+
+    return JSON.stringify({
+      version: 1,
+      algorithm: 'AES-GCM',
+      iv: this.encode(iv),
+      ciphertext: this.encode(new Uint8Array(ciphertext)),
+    } satisfies RecoveryWrappedVaultKey);
   }
 
   private encode(value: Uint8Array) { return btoa(String.fromCharCode(...value)); }
