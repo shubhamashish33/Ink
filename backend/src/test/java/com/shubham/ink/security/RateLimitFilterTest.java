@@ -22,7 +22,7 @@ class RateLimitFilterTest {
 
     @BeforeEach
     void setUp() {
-        filter = new RateLimitFilter(new RateLimitProperties(2, 1), objectMapper);
+        filter = new RateLimitFilter(new RateLimitProperties(2, 1, 20, 1, 15, 100, true), objectMapper);
     }
 
     @Test
@@ -58,6 +58,7 @@ class RateLimitFilterTest {
         assertThat(body.get("status").asInt()).isEqualTo(429);
         assertThat(body.get("message").asText()).isEqualTo("Too many requests. Please try again later");
         assertThat(body.get("path").asText()).isEqualTo("/api/auth/login");
+        assertThat(limitedResponse.getHeader("Retry-After")).isEqualTo("60");
     }
 
     @Test
@@ -72,6 +73,20 @@ class RateLimitFilterTest {
                 new MockHttpServletResponse(), countingChain(chainCalls));
 
         assertThat(chainCalls).hasValue(3);
+    }
+
+    @Test
+    void usesForwardedClientAddressWhenEnabled() throws Exception {
+        AtomicInteger chainCalls = new AtomicInteger();
+        MockHttpServletRequest first = request("/api/auth/login", "10.0.0.1");
+        first.addHeader("X-Forwarded-For", "203.0.113.10, 10.0.0.1");
+        MockHttpServletRequest second = request("/api/auth/login", "10.0.0.1");
+        second.addHeader("X-Forwarded-For", "203.0.113.11, 10.0.0.1");
+
+        filter.doFilter(first, new MockHttpServletResponse(), countingChain(chainCalls));
+        filter.doFilter(second, new MockHttpServletResponse(), countingChain(chainCalls));
+
+        assertThat(chainCalls).hasValue(2);
     }
 
     private MockHttpServletRequest request(String path, String remoteAddress) {
