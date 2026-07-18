@@ -38,6 +38,12 @@ jdbc:postgresql://localhost:5433/ink
 
 `localhost` means your Windows machine. Port `5433` is mapped to Postgres port `5432` inside Docker.
 
+## Production and Render
+
+- Render services do not use this Compose file, so these changes do not alter the existing hosted frontend, backend, or database URLs.
+- Configure Render's health check path as `/actuator/health`. Prometheus is disabled by default and must not be exposed through the public app service.
+- The backend accepts `X-Forwarded-For` by default because Render supplies it. If you deploy the backend directly to the internet, set `RATE_LIMIT_TRUST_FORWARDED_FOR=false`.
+
 ## Frontend Setup
 
 The frontend is an Angular app in `frontend/`.

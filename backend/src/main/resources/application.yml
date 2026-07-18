@@ -32,12 +32,19 @@ app:
   rate-limit:
     auth-capacity: ${RATE_LIMIT_AUTH_CAPACITY:5}
     auth-refill-minutes: ${RATE_LIMIT_AUTH_REFILL_MINUTES:1}
+    auth-global-capacity: ${RATE_LIMIT_AUTH_GLOBAL_CAPACITY:120}
+    auth-global-refill-minutes: ${RATE_LIMIT_AUTH_GLOBAL_REFILL_MINUTES:1}
+    bucket-expiry-minutes: ${RATE_LIMIT_BUCKET_EXPIRY_MINUTES:15}
+    max-buckets: ${RATE_LIMIT_MAX_BUCKETS:10000}
+    # Render forwards the originating address. Set this to false if the service is
+    # ever exposed without a trusted proxy that overwrites X-Forwarded-For.
+    trust-forwarded-for: ${RATE_LIMIT_TRUST_FORWARDED_FOR:true}
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus
+        include: health,info
   endpoint:
     health:
       probes:
